@@ -6,7 +6,6 @@ Created on Mon Sep 28 11:57:58 2020
 """
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 from python_modules.module_merging_fitness_with_interactions_and_go_terms import merging_datasets
@@ -16,7 +15,7 @@ gene_name='BEM1'
 data=merging_datasets(gene_name)
 score_synt_pd=data
 #%% Adjust the type on which interaction type was used 
-type_int='SL'
+type_int='Positive'
 
 #%% Plots for the multiplicative model
 
@@ -51,15 +50,20 @@ plt.xlim([0,max])
 from collections import Counter
 
 go_term_all=[]
-papers_all=[]
+
 
 merge_data_numeric=score_synt_pd
 
 for i in np.arange(0,len(merge_data_numeric)):
-   
-    go_term_all.append(merge_data_numeric.loc[:,'go-term-filtered-gene'][i])
+        go_term_all.append(merge_data_numeric.loc[:,'go-term-filtered-gene'][i])
+    
+go_new=[]     
+for i in go_term_all:
+    if i!='gene not found':
+        go_new.append(i)
+        
 
-out_go = np.concatenate(go_term_all).ravel()
+out_go = np.concatenate(go_new).ravel()
 
 
 word_list_go = out_go
