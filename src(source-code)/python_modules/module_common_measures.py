@@ -132,3 +132,50 @@ def common_go_paralogs(data_go,data_paralogs):
     
 
  return df_sorted
+
+
+def common_go(data_go,data_common_partners):
+    """"
+    function that computes the common go terms or interactors genes
+    input: data_go= dataframe with all go terms per gene
+    data_common_partners= dataframe output of the function common_partners
+    
+    """
+ 
+    query=np.unique(np.array(data_common_partners['query']))
+    # big for loop for each gene analyzed in common partners
+    for i in np.arange(0,len(query)):
+        partners=data_common_partners[data_common_partners['query']==query[i]]['names of genes']
+
+        d2=defaultdict(dict)
+
+        for genes in partners:
+            d2[genes]['query']=query[i]
+            d2[genes]['names of genes']=genes
+
+            tmp=data_go[data_go['Gene']==query[i]]['go-term'].tolist()
+            tmp=np.unique(tmp).tolist()
+
+            
+
+            tmp2=data_go[data_go['Gene']==genes]['go-term'].tolist()
+            tmp2=np.unique(tmp2).tolist()
+
+                        
+
+       
+            d2[genes]['common-go-terms']=np.intersect1d(tmp,tmp2)
+            if len(tmp)==0:
+                d2[genes]['fraction-of-common-go']=0
+            else:
+                d2[genes]['fraction-of-common-go']=len(np.intersect1d(tmp,tmp2))/len(tmp) *100
+
+        
+
+    df=pd.DataFrame(d2).T
+    df_sorted=df.sort_values(by='fraction-of-common-go',ascending=False)
+  
+
+
+
+    return df_sorted

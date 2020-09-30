@@ -19,7 +19,7 @@ from python_modules.module_common_measures import common_partners
 
 data=pd.read_excel('../datasets/data-BioGrid-Yeast.xlsx')
 #%%
-query=['BEM1']
+query=['CLA4']
 
 #%% Calling the function
 
@@ -41,7 +41,7 @@ common_partners_data.loc[ng.index,'score']='NG'
 
 sns.set(style="ticks", color_codes=True)
 plot=sns.pairplot(common_partners_data,hue='score',vars=['fraction-of-common-partners','number of partners of pairB'],palette='dark')
-plt.title(query[0])
+plot.fig.suptitle(query[0])
 #%% Saving the figure
 
 plot.savefig('../output_images/common-interactors-of-'+ query[0]+'-based-on-their-type.png',dpi=300,format='png',transparent=True)
