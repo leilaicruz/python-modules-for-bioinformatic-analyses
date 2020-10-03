@@ -11,7 +11,7 @@ from collections import defaultdict
 import seaborn as sns
 import matplotlib.cm as cm
 import scipy as scipy
-import random
+
 
 import os
 
@@ -37,7 +37,7 @@ domain_id_list=data_domains['domain-name']
 #%% selecting size of the protein piars to analyze
 
 protein_a_list,protein_a_list_non,protein_b_list,protein_b_list_non=sample_protein_pairs(data_domains=data_domains,
-                                                                                         data_sl=data_sl,data_nonsl=data_nonsl,sample_size=1000)
+                                                                                         data_sl=data_sl,data_nonsl=data_nonsl,sample_size=300)
 
 #%%  printing result
 print('We are going to analyze',len((protein_a_list)) ,'randomly selected protein pairs, out of',len(data_sl),'SL protein pairs')
@@ -74,9 +74,10 @@ index_1_nontrue_count=index_1_nontrue.count(axis=1).sum()
 
 #%% Vizualization
 
-plt.bar(['fraction of 2 in the nSL','fraction of 1 in the nSL'],[index_2_nontrue_count/(len(protein_feat_non_true_pd.index)*len(protein_feat_non_true_pd.columns)),index_1_nontrue_count/(len(protein_feat_non_true_pd.index)*len(protein_feat_non_true_pd.columns))],alpha=0.6,color=['blue','lightblue']), 
+colors = ['#00F28E','#F20064']
+plt.bar(['fraction of 2 in the nSL','fraction of 1 in the nSL'],[index_2_nontrue_count/(len(protein_feat_non_true_pd.index)*len(protein_feat_non_true_pd.columns)),index_1_nontrue_count/(len(protein_feat_non_true_pd.index)*len(protein_feat_non_true_pd.columns))],alpha=0.6,color=[colors[0],'black']), 
 
-plt.bar(['fraction of 2 in SL ','fraction of 1 in SL'],[index_2_true_count/(len(protein_feat_true_pd.index)*len(protein_feat_true_pd.columns)),index_1_true_count/(len(protein_feat_true_pd.index)*len(protein_feat_true_pd.columns))],alpha=0.6,color=['coral','lightcoral'])
+plt.bar(['fraction of 2 in SL ','fraction of 1 in SL'],[index_2_true_count/(len(protein_feat_true_pd.index)*len(protein_feat_true_pd.columns)),index_1_true_count/(len(protein_feat_true_pd.index)*len(protein_feat_true_pd.columns))],alpha=0.6,color=[colors[1],'black'])
 
 plt.ylabel('Fraction from the population')
 plt.yscale('log')
@@ -105,12 +106,12 @@ corr_keys=pd.concat([mean,std,lethality],axis=1)
 
 #%% Viz of the stats 
 fig, axs = plt.subplots(ncols=2, figsize=(10,5))
-a=sns.violinplot(x="lethality", y="mean", data=corr_keys,ax=axs[0],palette='colorblind')
+a=sns.violinplot(x="lethality", y="mean", data=corr_keys,ax=axs[0],palette='Paired')
 a.set_title('How the mean varies with Lethality')
-b=sns.violinplot(x="lethality", y="std", data=corr_keys,ax=axs[1],palette='colorblind')
+b=sns.violinplot(x="lethality", y="std", data=corr_keys,ax=axs[1],palette='Paired')
 b.set_title('How the std varies with Lethality')
 
-pair=sns.pairplot(corr_keys,hue='lethality',diag_kind='kde',kind='reg',palette='colorblind')
+pair=sns.pairplot(corr_keys,hue='lethality',diag_kind='kde',kind='reg',palette='Paired')
 pair.fig.suptitle('Pairplot to see data dependencies with Lethality',y=1.08)
 
 #%% P- values and correlation
@@ -153,27 +154,27 @@ print ('Test set:', X_test.shape,  y_test.shape)
 
 #%% Choosing the best SVM model
 
-from sklearn.model_selection import GridSearchCV
-from sklearn.svm import SVC
-parameters = [{'C': [1, 10, 100], 'kernel': ['rbf'], 'gamma': ['auto','scale']}]
-search = GridSearchCV(SVC(), parameters, n_jobs=-1, verbose=1)
-search.fit(X_train, y_train)
+# from sklearn.model_selection import GridSearchCV
+# from sklearn.svm import SVC
+# parameters = [{'C': [1, 10, 100], 'kernel': ['rbf'], 'gamma': ['auto','scale']}]
+# search = GridSearchCV(SVC(), parameters, n_jobs=-1, verbose=1)
+# search.fit(X_train, y_train)
 
-best_parameters = search.best_estimator_
-print(best_parameters)
+# best_parameters = search.best_estimator_
+# print(best_parameters)
 
 #%% Training with the best model
-
+print('Training the model...')
 from sklearn import svm
 
-clf = svm.SVC(C=1, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
+clf = svm.SVC(C=10, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
     decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False).fit(X_train, y_train)
-print(clf.score(X_test, y_test))
+print('The  score of the model is =',clf.score(X_test, y_test))
 
 #%% Making predictions
-
+print('Making predictions and evaluating the model...')
 from sklearn import metrics
 from sklearn.metrics import log_loss
 from sklearn.metrics import jaccard_score
@@ -229,6 +230,7 @@ axs[1].set_title('2-class Precision-Recall curve: '
                    'AP={0:0.2f}'.format(average_precision))
 axs[1].legend()
 
+
 #%% Confusion matrix 
 class_names=[1,2,3]
 fig, ax = plt.subplots()
@@ -252,6 +254,7 @@ plt.xlabel('Predicted label')
 
 #%% Evaluation of the classifier in terms of overfitting : Cross Validation!
 
+print('Cross validation to test overfitting..')
 
 from sklearn.model_selection import StratifiedKFold
 import time
@@ -280,4 +283,4 @@ plt.ylim(0,1)
 plt.title('5-fold crossvalidation result')
 plt.ylabel('Accuracy')
 
-print('The elapsed time was',elapsed_time,'seconds')
+print('The elapsed time was',elapsed_time/60,'minutes')
