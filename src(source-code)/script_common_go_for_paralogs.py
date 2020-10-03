@@ -26,10 +26,11 @@ paralogs_go=common_go_paralogs(data_go=data_go,data_paralogs=data_paralogs)
 #%% viz
 fig, axes=plt.subplots(1,1)
 sns.set(style="ticks", color_codes=True)
-sns.distplot(paralogs_go['fraction-of-common-go'])
+colors = ['#00F28E','#F20064']
+sns.distplot(paralogs_go['fraction-of-common-go'],color=colors[1])
 plt.ylabel('normalized counts')
 
 plt.title('Evidence that paralogs has functionally diverged')
 
 #%% saving the figure 
-fig.savefig('../output_images/functional-diversification-of-paralogs.png',format='png',dpi=300,transparent=True)
+#fig.savefig('../output_images/functional-diversification-of-paralogs.png',format='png',dpi=300,transparent=True)
