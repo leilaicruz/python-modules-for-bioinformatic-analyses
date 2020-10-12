@@ -1,1 +1,1 @@
-Code to generate the figure is [HERE](scripts_interactors_of_essentia;)
+Code to generate the figure is [HERE](scripts_interac)
