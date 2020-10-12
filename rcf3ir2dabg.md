@@ -9,7 +9,6 @@ Created on Wed Sep 30 10:33:19 2020
 import numpy as np
 import seaborn as sns
 import pandas as pd
-
 import matplotlib.pyplot as plt
 from python_modules.module_essential_and_non_essential_genes_interactors import how_many_interactors
 
