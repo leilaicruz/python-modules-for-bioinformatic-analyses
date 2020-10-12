@@ -41,4 +41,5 @@ sns.distplot(interactors.loc['essentials'],label='essential')
 plt.legend()
 plt.xlabel('Number of total interactors')
 plt.ylabel('normalized density')
-plt.savefig('output_images/essential-and-not-essential-genes-number-of-interactors.png',format='png',dpi=300,transparent=True)```
+plt.savefig('output_images/essential-and-not-essential-genes-number-of-interactors.png',format='png',dpi=300,transparent=True)
+```
