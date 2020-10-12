@@ -12,8 +12,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from python_modules.module_essential_and_non_essential_genes_interactors import how_many_interactors
 
-#%%
-## Importing datasets
+#%%Importing datasets
 essential_list_2= np.loadtxt(r'../datasets/Cervisiae_EssentialGenes_List_2.txt',skiprows=3,dtype='U4')
 data_interactions=pd.read_excel(r'../datasets/data-BioGrid-Yeast.xlsx')
 
