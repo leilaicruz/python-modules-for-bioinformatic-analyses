@@ -1,1 +1,1 @@
-Code to generate the figure is [HERE](scripts_interactors-of-essential-genes)
+Code to generate the figure is [HERE](scripts_interactors-of-essential-genes.py)
