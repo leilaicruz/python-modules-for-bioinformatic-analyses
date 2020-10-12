@@ -15,8 +15,7 @@ dependencies:
   - NetworkX
   - scikit-learn
   - tabulate 
-  - openpyxl
-  - os 
+  - openpyxl 
   - pip:
     - quantecon
     - jupyter-book>=0.7.0b
