@@ -42,4 +42,5 @@ plt.legend()
 plt.xlabel('Number of total interactors')
 plt.ylabel('normalized density')
 plt.savefig('output_images/essential-and-not-essential-genes-number-of-interactors.png',format='png',dpi=300,transparent=True)
+
 ```
