@@ -1,1 +1,1 @@
-To see the code of all the figures displayed in this document go [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leilaicruz/python-modules-for-bioinformatic-analyses/project_code)
+To see the code of all the figures displayed in this document go to  [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leilaicruz/python-modules-for-bioinformatic-analyses/project_code)
