@@ -1,1 +1,0 @@
-To see the code go [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leilaicruz/python-modules-for-bioinformatic-analyses/project_code)
