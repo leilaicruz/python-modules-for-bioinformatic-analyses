@@ -226,7 +226,7 @@ test_score = metrics.accuracy_score(y_test, y_pred) * 100
 precision=metrics.precision_score(y_test, y_pred) *100
 
 # report Recall
-recall=metrics.recall_score(y_test, y_pred)
+recall=metrics.recall_score(y_test, y_pred) *100
 
 # Write scores to a file
 with open("metrics.txt", 'w') as outfile:
@@ -320,5 +320,6 @@ plt.errorbar(x=['all tests'],y=np.mean(cv_results['test_score']) , yerr=np.std(c
 plt.ylim(0,1)
 plt.title('5-fold crossvalidation result')
 plt.ylabel('Accuracy')
+plt.savefig('5-fold-crossvalidation.png',dpi=200)
 
 print('The elapsed time was',elapsed_time/60,'minutes')
