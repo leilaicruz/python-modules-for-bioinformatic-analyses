@@ -32,7 +32,7 @@ t = time.process_time()
 # %% Importing datasets
 
 script_dir = os.path.dirname('__file__') #<-- absolute dir the script is in
-rel_path_SL = "../datasets/data-synthetic-lethals.xlsx"
+rel_path_SL = "datasets/data-synthetic-lethals.xlsx"
 rel_path_nSL="../datasets/data-positive-genetic.xlsx"
 rel_path_domains="../datasets/proteins-domains-from-Pfam.xlsx"
 
