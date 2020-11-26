@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Oct  2 09:38:25 2020
-
-@author: linigodelacruz
-"""
+# %% [markdown]
+# """
+# Created on Fri Oct  2 09:38:25 2020
+#
+# @author: linigodelacruz
+# """
+#
+# # Notebook showing the Machine learning pipeline to predict SL pairs from protein domains "homology"
+# %%
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,7 +25,11 @@ from python_modules.module_ML_protein_domains_SL import feature_building
 import time 
 
 t = time.process_time()
-#%% Importing datasets
+
+# %% [markdown]
+# ## Retrieving local data 
+
+# %% Importing datasets
 
 script_dir = os.path.dirname('__file__') #<-- absolute dir the script is in
 rel_path_SL = "../datasets/data-synthetic-lethals.xlsx"
@@ -34,30 +42,39 @@ data_domains=data_domains.dropna()
 data_nonsl=pd.read_excel(os.path.join(script_dir, rel_path_nSL),header=0)
 
 domain_id_list=data_domains['domain-name']
-#%% selecting size of the protein piars to analyze
+#%% selecting size of the protein pairs to analyze
 
 protein_a_list,protein_a_list_non,protein_b_list,protein_b_list_non=sample_protein_pairs(data_domains=data_domains,
-                                                                                         data_sl=data_sl,data_nonsl=data_nonsl,sample_size=300)
+                                                                                         data_sl=data_sl,data_nonsl=data_nonsl,sample_size=100)
 
-#%%  printing result
+# %% printing result
 print('We are going to analyze',len((protein_a_list)) ,'randomly selected protein pairs, out of',len(data_sl),'SL protein pairs')
 print('We are going to analyze',len((protein_a_list_non)) ,'randomly selected protein pairs, out of',len(data_nonsl),'positive protein pairs')
 
-#%% Postprocesing 1: Removing empty protein domains
+# %% [markdown]
+# ### Removing empty protein domains
+
+# %% Postprocesing 1: Removing empty protein domains
 
 protein_a_list_new,protein_b_list_new=remove_empty_domains(protein_a_list,protein_b_list)
 protein_a_list_non_new,protein_b_list_non_new=remove_empty_domains(protein_a_list_non,protein_b_list_non)
 
-#%% printing result
+# %% printing result
 
 print('The empty domain in the SL were:', len(protein_a_list)-len(protein_a_list_new), 'out of', len(protein_a_list),'domains')
 print('The empty domain in the nSL were:', len(protein_a_list_non)-len(protein_a_list_non_new), 'out of', len(protein_a_list_non),'domains')
-#%% Feature engineering 
+# %% [markdown]
+# ### Feature building 
+
+# %% Feature engineering
 protein_feat_true_pd=feature_building(protein_b_list_new=protein_b_list_new,protein_a_list_new=protein_a_list_new,domain_id_list=domain_id_list)
 protein_feat_non_true_pd=feature_building(protein_b_list_new=protein_b_list_non_new,protein_a_list_new=protein_a_list_non_new,domain_id_list=domain_id_list)
 
 
-#%% printing results
+# %% [markdown]
+# ### Visualizing the features per type 
+
+# %% printing results
 
 index_2_true=protein_feat_true_pd.where(protein_feat_true_pd==2)
 index_2_true_count=index_2_true.count(axis=1).sum()
@@ -72,7 +89,7 @@ index_1_nontrue=protein_feat_non_true_pd.where(protein_feat_non_true_pd==1)
 index_1_nontrue_count=index_1_nontrue.count(axis=1).sum()
 
 
-#%% Vizualization
+# %% Vizualization
 
 colors = ['#00F28E','#F20064']
 plt.bar(['fraction of 2 in the nSL','fraction of 1 in the nSL'],[index_2_nontrue_count/(len(protein_feat_non_true_pd.index)*len(protein_feat_non_true_pd.columns)),index_1_nontrue_count/(len(protein_feat_non_true_pd.index)*len(protein_feat_non_true_pd.columns))],alpha=0.6,color=[colors[0],'black']), 
@@ -83,19 +100,19 @@ plt.ylabel('Fraction from the population')
 plt.yscale('log')
 plt.xticks(rotation=40)
 
-#%% Adding the labels (response variables) to each dataset
+# %% Adding the labels (response variables) to each dataset
 
 protein_feat_true_pd['lethality']=np.ones(shape=(len(protein_a_list_new)))
 protein_feat_non_true_pd['lethality']=np.zeros(shape=(len(protein_a_list_non_new)))
 
-#%% Joining both datasets
+# %% Joining both datasets
 
 feature_post=pd.concat([protein_feat_true_pd,protein_feat_non_true_pd],axis=0)
 feature_post=feature_post.set_index(np.arange(0,len(protein_a_list_new)+len(protein_a_list_non_new)))
 print('The number of features are:',feature_post.shape[1])
 print('The number of samples are:',feature_post.shape[0])
 
-#%% Postprocessing and exploration of the feature matrix of both datasets
+# %% Postprocessing and exploration of the feature matrix of both datasets
 
 mean=feature_post.T.describe().loc['mean']
 std=feature_post.T.describe().loc['std']
@@ -104,7 +121,7 @@ lethality=feature_post['lethality']
 corr_keys=pd.concat([mean,std,lethality],axis=1)
 
 
-#%% Viz of the stats 
+# %% Viz of the stats
 fig, axs = plt.subplots(ncols=2, figsize=(10,5))
 a=sns.violinplot(x="lethality", y="mean", data=corr_keys,ax=axs[0],palette='Paired')
 a.set_title('How the mean varies with Lethality')
@@ -114,7 +131,7 @@ b.set_title('How the std varies with Lethality')
 pair=sns.pairplot(corr_keys,hue='lethality',diag_kind='kde',kind='reg',palette='Paired')
 pair.fig.suptitle('Pairplot to see data dependencies with Lethality',y=1.08)
 
-#%% P- values and correlation
+# %% P- values and correlation
 
 a=scipy.stats.pearsonr(corr_keys['mean'],corr_keys['lethality'])
 p_value_corr=defaultdict(dict)
@@ -128,7 +145,7 @@ for i in columns:
 
 p_value_corr_pd=pd.DataFrame(p_value_corr)
 
-#%% Viz of correlations
+# %% Viz of correlations
 
 corr = corr_keys.corr()
 fig, axs = plt.subplots(ncols=2, figsize=(10,5))
@@ -141,18 +158,18 @@ axs[1].set_ylabel('p-value')
 axs[1].set_xlabel('correlation with lethality')
 axs[1].legend()
 
-#%% Separate features from labels to set up the data from the ML workflow
+# %% Separate features from labels to set up the data from the ML workflow
 
 X, y = feature_post.drop(columns=["lethality"]), feature_post["lethality"]
 
-#%% Separating training and testing set
+# %% Separating training and testing set
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test =  train_test_split(X,y,test_size = 0.3, random_state= 0)
 
 print ('Train set:', X_train.shape,  y_train.shape)
 print ('Test set:', X_test.shape,  y_test.shape)
 
-#%% Choosing the best SVM model
+# %% Choosing the best SVM model
 
 # from sklearn.model_selection import GridSearchCV
 # from sklearn.svm import SVC
@@ -163,7 +180,7 @@ print ('Test set:', X_test.shape,  y_test.shape)
 # best_parameters = search.best_estimator_
 # print(best_parameters)
 
-#%% Training with the best model
+# %% Training with the best model
 print('Training the model...')
 from sklearn import svm
 
@@ -173,7 +190,7 @@ clf = svm.SVC(C=10, break_ties=False, cache_size=200, class_weight=None, coef0=0
     tol=0.001, verbose=False).fit(X_train, y_train)
 print('The  score of the model is =',clf.score(X_test, y_test))
 
-#%% Making predictions
+# %% Making predictions
 print('Making predictions and evaluating the model...')
 from sklearn import metrics
 from sklearn.metrics import log_loss
@@ -198,8 +215,19 @@ print("Precision:",metrics.precision_score(y_test, y_pred))
 print("Recall:",metrics.recall_score(y_test, y_pred))
 
 print(classification_report(y_test, y_pred, target_names=['NonSl','SL']))
+#%% writing a document
 
-#%% ROC curves
+# Report training set score
+train_score = metrics.accuracy_score(y_train, clf.predict(X_train)) * 100
+# Report test set score
+test_score = metrics.accuracy_score(y_test, y_pred) * 100
+
+# Write scores to a file
+with open("metrics.txt", 'w') as outfile:
+        outfile.write("Training accuracy: %2.1f%%\n" % train_score)
+        outfile.write("Test accuracy : %2.1f%%\n" % test_score)
+
+# %% ROC curves
 
 fig, axs = plt.subplots(ncols=2, figsize=(10,5))
 import sklearn.metrics as metrics
@@ -216,7 +244,7 @@ axs[0].set_ylabel('True Positive Rate')
 axs[0].set_title('Receiver operating characteristic example')
 axs[0].legend(loc="lower right")
 
-#%% Precision vs Recall curves
+# %% Precision vs Recall curves
 
 precision, recall, thresholds = metrics.precision_recall_curve(y_test, scores)
 average_precision = metrics.average_precision_score(y_test, scores)
@@ -231,7 +259,7 @@ axs[1].set_title('2-class Precision-Recall curve: '
 axs[1].legend()
 
 
-#%% Confusion matrix 
+# %% Confusion matrix
 class_names=[1,2,3]
 fig, ax = plt.subplots()
 from sklearn.metrics import confusion_matrix
@@ -252,7 +280,7 @@ plt.title('Confusion matrix', y=1.1)
 plt.ylabel('Actual label')
 plt.xlabel('Predicted label')
 
-#%% Evaluation of the classifier in terms of overfitting : Cross Validation!
+# %% Evaluation of the classifier in terms of overfitting : Cross Validation!
 
 print('Cross validation to test overfitting..')
 
@@ -270,7 +298,7 @@ cv=StratifiedKFold(n_splits=5)
 cv_results = cross_validate(clf, X, y, cv=cv)
 elapsed_time = time.process_time() - t
 
-#%% Viz of the variation of the test error per fold . If the variation is high , the classifier may be proned to overfitting.
+# %% Viz of the variation of the test error per fold . If the variation is high , the classifier may be proned to overfitting.
 
 fig, axs = plt.subplots(ncols=1, figsize=(3,3))
 sorted(cv_results.keys())

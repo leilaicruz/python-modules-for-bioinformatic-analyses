@@ -35,23 +35,26 @@ datawithfitness_constanzo.columns=['query-allele-name','array-allele-name','scor
 #%%
 datawithfitness_satay=pd.read_excel(filename_fitness_satay,index_col='Unnamed: 0')
 datawithfitness_satay.columns=['query-allele-name','array-allele-name','query-fitness','array-fitness','double-fitness','score']
-
+#%%
+#%%
+dpl1_fitness=datawithfitness_satay[datawithfitness_satay['array-allele-name']=='DPL1']['array-fitness'].tolist()[0]
 # %% Fitness plot SATAY
 interactions_pd=datawithfitness_satay
 fig, axes=plt.subplots(1,2)
 plt.subplots_adjust(right=1,wspace=0.6)
+max=10
 axes[0].scatter(x=interactions_pd['array-fitness'],y=interactions_pd['double-fitness'],alpha=0.4)
-axes[0].set_xlim([0,1])
+axes[0].set_xlim([0,max])
 axes[0].set_xlabel('Single mutant fitness-b')
 axes[0].set_ylabel('double mutant fitness-ab')
-axes[0].set_ylim([0,1])
-x = np.linspace(0, 1)
-axes[0].plot(x, 0.19*x,linestyle='solid',color='black');
-x_masking = np.linspace(0, 0.19)
+axes[0].set_ylim([0,max])
+x = np.linspace(0, max)
+axes[0].plot(x, dpl1_fitness*x,linestyle='solid',color='black');
+x_masking = np.linspace(0, dpl1_fitness)
 axes[0].plot(x, x,linestyle='solid',color='black');
 
-trianglex=[0,1,0.19,0]
-triangley=[0,0.19,0.19,0]
+trianglex=[0,1,dpl1_fitness,0]
+triangley=[0,dpl1_fitness,dpl1_fitness,0]
 
 axes[0].fill(trianglex, triangley,alpha=0.5,color='gray')
 
@@ -94,4 +97,4 @@ axes[1].set_title('Constanzo' )
 
 #%% save figure
 
-fig.savefig('../output_images/constanzo-vs-satay-dpl1-fitness-map.png',format='png',dpi=300,transparent=True)
+fig.savefig('output_images/constanzo-vs-satay-dpl1-fitness-map.png',format='png',dpi=300,transparent=True)
