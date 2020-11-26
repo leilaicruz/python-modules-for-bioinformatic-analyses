@@ -131,6 +131,7 @@ b.set_title('How the std varies with Lethality')
 pair=sns.pairplot(corr_keys,hue='lethality',diag_kind='kde',kind='reg',palette='Paired')
 pair.fig.suptitle('Pairplot to see data dependencies with Lethality',y=1.08)
 
+pair.savefig('Lethality_correlation_with_mean_and_std.png',dpi=300,format='png')
 # %% P- values and correlation
 
 a=scipy.stats.pearsonr(corr_keys['mean'],corr_keys['lethality'])
@@ -281,13 +282,13 @@ tick_marks = np.arange(len(class_names))
 plt.xticks(tick_marks, class_names)
 plt.yticks(tick_marks, class_names)
 
-confusion_matrix=sns.heatmap(pd.DataFrame(cm), annot=True, cmap="Blues" ,fmt='g')
+sns.heatmap(pd.DataFrame(cm), annot=True, cmap="Blues" ,fmt='g')
 ax.xaxis.set_label_position("top")
 plt.tight_layout()
 plt.title('Confusion matrix', y=1.1)
 plt.ylabel('Actual label')
 plt.xlabel('Predicted label')
-confusion_matrix.savefig("confusion_matrix.png")
+plt.savefig("confusion_matrix.png",dpi=300,format='png')
 
 # %% Evaluation of the classifier in terms of overfitting : Cross Validation!
 
