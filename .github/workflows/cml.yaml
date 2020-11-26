@@ -13,7 +13,7 @@ jobs:
 
           # Your ML workflow goes here
           pip install -r requirements.txt
-          python src(source-code)/script_ML_pipeline_protein_domains2lethality.py
+          python src/script_ML_pipeline_protein_domains2lethality.py
 
            echo "## Model metrics" > report.md
            cat metrics.txt >> report.md
