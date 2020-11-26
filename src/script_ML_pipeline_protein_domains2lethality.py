@@ -131,7 +131,8 @@ b.set_title('How the std varies with Lethality')
 pair=sns.pairplot(corr_keys,hue='lethality',diag_kind='kde',kind='reg',palette='Paired')
 pair.fig.suptitle('Pairplot to see data dependencies with Lethality',y=1.08)
 
-plt.savefig('Lethality_correlation_with_mean_and_std.png',dpi=60)
+plt.tight_layout()
+plt.savefig('Lethality_correlation_with_mean_and_std.png',dpi=100)
 # %% P- values and correlation
 
 a=scipy.stats.pearsonr(corr_keys['mean'],corr_keys['lethality'])
@@ -288,7 +289,8 @@ plt.tight_layout()
 plt.title('Confusion matrix', y=1.1)
 plt.ylabel('Actual label')
 plt.xlabel('Predicted label')
-plt.savefig("confusion_matrix.png",dpi=60)
+plt.tight_layout()
+plt.savefig("confusion_matrix.png",dpi=100)
 
 # %% Evaluation of the classifier in terms of overfitting : Cross Validation!
 
@@ -320,6 +322,7 @@ plt.errorbar(x=['all tests'],y=np.mean(cv_results['test_score']) , yerr=np.std(c
 plt.ylim(0,1)
 plt.title('5-fold crossvalidation result')
 plt.ylabel('Accuracy')
-plt.savefig('5-fold-crossvalidation.png',dpi=60)
+plt.tight_layout()
+plt.savefig('5-fold-crossvalidation.png',dpi=100)
 
 print('The elapsed time was',elapsed_time/60,'minutes')
