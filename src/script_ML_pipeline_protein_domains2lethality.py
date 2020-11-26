@@ -221,11 +221,19 @@ print(classification_report(y_test, y_pred, target_names=['NonSl','SL']))
 train_score = metrics.accuracy_score(y_train, clf.predict(X_train)) * 100
 # Report test set score
 test_score = metrics.accuracy_score(y_test, y_pred) * 100
+# Report precision
+precision=metrics.precision_score(y_test, y_pred) *100
+
+# report Recall
+recall=metrics.recall_score(y_test, y_pred)
 
 # Write scores to a file
 with open("metrics.txt", 'w') as outfile:
         outfile.write("Training accuracy: %2.1f%%\n" % train_score)
         outfile.write("Test accuracy : %2.1f%%\n" % test_score)
+        outfile.write("Precision : %2.1f%%\n" % precision)
+        outfile.write("Recall : %2.1f%%\n" % recall)
+        
 
 # %% ROC curves
 
@@ -273,12 +281,13 @@ tick_marks = np.arange(len(class_names))
 plt.xticks(tick_marks, class_names)
 plt.yticks(tick_marks, class_names)
 
-sns.heatmap(pd.DataFrame(cm), annot=True, cmap="Blues" ,fmt='g')
+confusion_matrix=sns.heatmap(pd.DataFrame(cm), annot=True, cmap="Blues" ,fmt='g')
 ax.xaxis.set_label_position("top")
 plt.tight_layout()
 plt.title('Confusion matrix', y=1.1)
 plt.ylabel('Actual label')
 plt.xlabel('Predicted label')
+confusion_matrix.savefig("confusion_matrix.png")
 
 # %% Evaluation of the classifier in terms of overfitting : Cross Validation!
 
