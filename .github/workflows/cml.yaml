@@ -1,0 +1,21 @@
+name: ML-model-testing
+on: [push]
+jobs:
+  run:
+    runs-on: [ubuntu-latest]
+    container: docker://dvcorg/cml-py3:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cml_run
+        env:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+
+          # Your ML workflow goes here
+          pip install -r requirements.txt
+          python src/script_ML_pipeline_protein_domains2lethality.py
+
+           echo "## Model metrics" > report.md
+           cat metrics.txt >> report.md
+           
+           cml-send-comment report.md
