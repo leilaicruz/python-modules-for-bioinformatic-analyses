@@ -33,8 +33,8 @@ t = time.process_time()
 
 script_dir = os.path.dirname('__file__') #<-- absolute dir the script is in
 rel_path_SL = "datasets/data-synthetic-lethals.xlsx"
-rel_path_nSL="../datasets/data-positive-genetic.xlsx"
-rel_path_domains="../datasets/proteins-domains-from-Pfam.xlsx"
+rel_path_nSL="datasets/data-positive-genetic.xlsx"
+rel_path_domains="datasets/proteins-domains-from-Pfam.xlsx"
 
 data_sl=pd.read_excel(os.path.join(script_dir, rel_path_SL),header=0)
 data_domains=pd.read_excel(os.path.join(script_dir, rel_path_domains),header=0,index_col='Unnamed: 0')
