@@ -5,7 +5,7 @@
   matplotlib
   seaborn 
   scipy
-  xlrd=1.2.0
+  xlrd==1.2.0
   NetworkX
   scikit-learn
   tabulate 
