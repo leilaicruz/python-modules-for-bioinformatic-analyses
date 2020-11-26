@@ -34,10 +34,10 @@ data_domains=data_domains.dropna()
 data_nonsl=pd.read_excel(os.path.join(script_dir, rel_path_nSL),header=0)
 
 domain_id_list=data_domains['domain-name']
-#%% selecting size of the protein piars to analyze
+#%% selecting size of the protein pairs to analyze
 
 protein_a_list,protein_a_list_non,protein_b_list,protein_b_list_non=sample_protein_pairs(data_domains=data_domains,
-                                                                                         data_sl=data_sl,data_nonsl=data_nonsl,sample_size=300)
+                                                                                         data_sl=data_sl,data_nonsl=data_nonsl,sample_size=100)
 
 #%%  printing result
 print('We are going to analyze',len((protein_a_list)) ,'randomly selected protein pairs, out of',len(data_sl),'SL protein pairs')
@@ -198,6 +198,17 @@ print("Precision:",metrics.precision_score(y_test, y_pred))
 print("Recall:",metrics.recall_score(y_test, y_pred))
 
 print(classification_report(y_test, y_pred, target_names=['NonSl','SL']))
+#%% writing a document
+
+# Report training set score
+train_score = metrics.accuracy_score(y_train, clf.predict(X_train)) * 100
+# Report test set score
+test_score = metrics.accuracy_score(y_test, y_pred) * 100
+
+# Write scores to a file
+with open("metrics.txt", 'w') as outfile:
+        outfile.write("Training accuracy: %2.1f%%\n" % train_score)
+        outfile.write("Test accuracy : %2.1f%%\n" % test_score)
 
 #%% ROC curves
 

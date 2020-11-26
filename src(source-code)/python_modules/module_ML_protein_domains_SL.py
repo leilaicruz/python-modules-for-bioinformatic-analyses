@@ -46,7 +46,7 @@ def sample_protein_pairs(data_domains,data_sl,data_nonsl,sample_size):
     
     population = np.arange(0,len(data_sl))
     
-    # For loop for 10000 pairs sampled randomly from the SL/nSl pair list , and creating a big array of proteind domains id per protein pair
+    # For loop for 10000 pairs sampled randomly from the SL/nSl pair list , and creating a big array of protein domains id per protein pair
     random.seed() # initialize the random number generation
     for m in random.sample(list(population), sample_size):
         protein_a=data_domains[data_domains['name']==query_gene[m]]

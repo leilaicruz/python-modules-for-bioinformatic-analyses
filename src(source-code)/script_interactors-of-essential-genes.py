@@ -30,9 +30,9 @@ essential_list_array=np.array(essential_list_pd)
 
 #%% Executing the function
 
-output=how_many_interactors(data_of_interactors=data_interactions,who=essential_list_array,excluding_type='physical')
+output=how_many_interactors(data_of_interactors=data_interactions,who=essential_list_array,excluding_type=None)
 #%% saving to excel
-output.to_excel('../datasets/interactors-of-esential-and-non-essential-genes_only_genetic.xlsx')
+#output.to_excel('../datasets/interactors-of-esential-and-non-essential-genes_only_genetic.xlsx')
 
 #%% Vizualization
 interactors=output
@@ -41,4 +41,4 @@ sns.distplot(interactors.loc['essentials'],label='essential')
 plt.legend()
 plt.xlabel('Number of total interactors')
 plt.ylabel('normalized density')
-plt.savefig('../output_images/essential-and-not-essential-genes-number-of-interactors-only-GI.png',format='png',dpi=300,transparent=True)
+#plt.savefig('../output_images/essential-and-not-essential-genes-number-of-interactors-only-GI.png',format='png',dpi=300,transparent=True)
