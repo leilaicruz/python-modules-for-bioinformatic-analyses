@@ -20,7 +20,7 @@ jobs:
            
            echo "## Data viz" >> report.md
            cml-publish confusion_matrix.png --md >> report.md
-           cml-publish Lethality_correlation_with_mean_and_std.png.png --md >> report.md
+           cml-publish Lethality_correlation_with_mean_and_std.png --md >> report.md
            
           
            cml-send-comment report.md
