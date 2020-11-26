@@ -1,13 +1,13 @@
-  - python==3.7.*
-  - pip
-  - git
-  - pandas
-  - matplotlib
-  - seaborn 
-  - scipy
-  - xlrd=1.2.0
-  - NetworkX
-  - scikit-learn
-  - tabulate 
-  - openpyxl 
+  python==3.7.*
+  pip
+  git
+  pandas
+  matplotlib
+  seaborn 
+  scipy
+  xlrd=1.2.0
+  NetworkX
+  scikit-learn
+  tabulate 
+  openpyxl 
 
