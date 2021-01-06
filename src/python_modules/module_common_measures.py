@@ -47,8 +47,9 @@ def common_partners(query,data):
                     # tmp=np.array(q1[q1['gene-target-name']==genes_names2]['interaction-type'].tolist())
                     # type_interaction.append(tmp.ravel().ravel().ravel())
                     d[genes_names2] += 1
-                    
+                   
             d2[query2]['query']=genes_names
+
 
             tmp=q1[q1['gene-target-name']==query2]['interaction-type'].tolist()
             #tmp1.append(tmp)
@@ -148,7 +149,8 @@ def common_go(data_go,data_common_partners):
         partners=data_common_partners[data_common_partners['query']==query[i]]['names of genes']
 
         d2=defaultdict(dict)
-
+        # print(partners)
+        # print(query)
         for genes in partners:
             d2[genes]['query']=query[i]
             d2[genes]['names of genes']=genes
