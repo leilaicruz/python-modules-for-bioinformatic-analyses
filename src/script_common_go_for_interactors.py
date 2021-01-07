@@ -21,13 +21,14 @@ from python_modules.module_common_measures import common_partners
 data_go=pd.read_excel('../datasets/slim-goterms-filtered-data.xlsx')
 # data_go=pd.read_excel('../datasets/testDataGo.xlsx')
 
-data_go.columns=['Gene','gene-id','go-aspect','go-term','go-id','feature-type' ]
+data_go.columns=['Gene','gene-id','go-aspect','go-term','go-id','feature-type']
 
 data=pd.read_excel('../datasets/data-BioGrid-Yeast-doubled.xlsx')
 # data=pd.read_excel('../datasets/testDataInteractions.xlsx')
 #%% query
-
-query=['BEM2']
+query = pd.read_excel('../datasets/genesCellPolarity_SGD_amigo.xlsx')
+query = np.unique(query).tolist()
+# query=['BEM2','BEM3']
 # query=['geneA','GeneB']
 
 #%% Calling the function common_partners
@@ -60,7 +61,8 @@ common_go.loc[ng.index,'common_interactors']=common_partners_data.loc[ng.index,'
 #%% viz
 sns.set(style="ticks", color_codes=True)
 plot=sns.pairplot(common_go,hue='score',vars=['fraction-of-common-go','common_interactors'],palette='dark')
-plt.title(query[0])
+# plt.title(query[0])
+plt.title('CellPolarity Genes')
 
 
 #%% Saving the figure

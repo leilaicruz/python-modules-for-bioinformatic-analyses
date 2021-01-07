@@ -142,13 +142,14 @@ def common_go(data_go,data_common_partners):
     data_common_partners= dataframe output of the function common_partners
     
     """
- 
-    query=np.unique(np.array(data_common_partners['query']))
+    d3=defaultdict(dict)
+    query=np.unique(np.array(data_common_partners['query'])) # Finds all query genes listed with a common partner
     # big for loop for each gene analyzed in common partners
     for i in np.arange(0,len(query)):
         partners=data_common_partners[data_common_partners['query']==query[i]]['names of genes']
 
         d2=defaultdict(dict)
+        
         # print(partners)
         # print(query)
         for genes in partners:
@@ -171,13 +172,11 @@ def common_go(data_go,data_common_partners):
                 d2[genes]['fraction-of-common-go']=0
             else:
                 d2[genes]['fraction-of-common-go']=len(np.intersect1d(tmp,tmp2))/len(tmp) *100
-
+                
+      
+        d3.update(d2)
         
-
-    df=pd.DataFrame(d2).T
+    df=pd.DataFrame(d3).T
     df_sorted=df.sort_values(by='fraction-of-common-go',ascending=False)
-  
-
-
 
     return df_sorted
