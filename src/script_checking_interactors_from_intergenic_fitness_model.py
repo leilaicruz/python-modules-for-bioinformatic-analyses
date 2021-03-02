@@ -66,7 +66,7 @@ sns.heatmap([nrp1_intergenic_fitness_negative,nrp1_intergenic_pvalue_negative],v
 
 
     
-ax.set_xlabel('Existing positive interactors')
-ax2.set_xlabel('Existing negative interactors')
+ax.set_xlabel('Existing positive interactors (expecting negative log2FC)')
+ax2.set_xlabel('Existing negative interactors (expecting positive log2FC)')
 
 fig.savefig('heatmap-existing-interactors-vs-log2fc.png',format='png',dpi=300,transparent=False)
