@@ -34,7 +34,7 @@ for i in np.arange(0,len(datasets)):
 
 ## Getting the rates from the function : getting_r
 
-rates,reads_per_transposons=getting_r(datasets)
+rates,reads_per_transposons=getting_r(datasets,time=False)
 #%% Preparing datasets for analyses
 
 rates_pd=pd_to_compare_libraries(rates,datasets)
@@ -43,14 +43,26 @@ readpertransposon_pd=pd_to_compare_libraries(reads_per_transposons,datasets)
 #%% Plotting the differences from dnrp1 fitness vs WT fitness levels 
 
 fig = plt.figure(figsize=(10,5))
-ax = fig.add_subplot(121)
-ax.hist(readpertransposon_pd['average_wt'])
+ax = fig.add_subplot(111)
+#ax.scatter(readpertransposon_pd['average_wt'],readpertransposon_pd['average_dnrp1'],alpha=0.5)
 ax.set_xlabel('average reads per transposon WT')
+ax.set_ylabel('average reads per transposon dnrp1')
 
-ax2 = fig.add_subplot(122)
-ax2.hist(readpertransposon_pd['average_dnrp1'])
-ax2.set_xlabel('average reads per transposon dnrp1')
+# ax2 = fig.add_subplot(122)
+# ax2.hist(readpertransposon_pd['average_dnrp1'])
+# ax2.set_xlabel('average reads per transposon dnrp1')
+# ax2.set_ylabel('counts')
+for i in np.arange(0,len(rates_pd)):
+    x=readpertransposon_pd['average_wt'][i]
+    y=readpertransposon_pd['average_dnrp1'][i]
+    ax.scatter(x,y,alpha=0.5,color='b')
+    if np.abs(x-y)>35:
+        ax.text(x*(1-0.02) ,y*(1+0.02) , readpertransposon_pd.index[i] , fontsize=3)
 
+ax.set_xlim(0,150)
+ax.set_ylim(0,150)
+#%% saving the plot
+fig.savefig('output_images/dnrp1-vs-wt-comparison-reads-per-transposons.png',format='png',dpi=300,transparent=True)
 #%% significant genes
 test_rates=[]
 test_readpertransposon=[]
@@ -58,7 +70,7 @@ test_readpertransposon=[]
 for i in np.arange(0,len(rates_pd)):
     test_rates.append(scipy.stats.ttest_ind(rates_pd.loc[rates_pd.index[i],['nrp1_1_a','nrp1_1_b','nrp1_2_a','nrp2_2_b']], rates_pd.loc[rates_pd.index[i],['wt_a','wt_b']]))
     test_readpertransposon.append(scipy.stats.ttest_ind(readpertransposon_pd.loc[readpertransposon_pd.index[i],['nrp1_1_a','nrp1_1_b','nrp1_2_a','nrp2_2_b']], readpertransposon_pd.loc[readpertransposon_pd.index[i],['wt_a','wt_b']]))
-#%% FC and p-value or volcano on fitness 
+### FC and p-value or volcano on fitness 
 
 for i in np.arange(0,len(rates_pd)):
     if rates_pd['average_wt'][i]!=0 and rates_pd['average_dnrp1'][i]!=0:
@@ -173,22 +185,28 @@ fig.savefig('significant-dnrp1-fitness-map-from-satay.png',dpi=300,transparent=F
 
 #%% Intergenic model per gene in the population
 
-K=np.sum(readpertransposon_pd.loc[:,'average_wt'])# carrying capacity
-gene='BEM1'
+K_wt=np.sum(readpertransposon_pd.loc[:,'average_wt'])# carrying capacity
+gene='BEM3'
+#gene=MED11 essential for WT and not for nrp1
+# gene = MPM1  # max for wt
+t=np.linspace(0,90)
+rm_wt=np.abs(rates_pd.loc[gene,'average_wt'])
+N_wt=np.exp(rm_wt*t)/(1+np.exp(rm_wt*t)/K_wt)
 
-t=np.linspace(0,100)
-rm_wt=np.abs(rates_pd.loc[gene,'norm2max_wt'])
-N_wt=np.exp(rm_wt*t)/(1+np.exp(rm_wt*t)/K)
-
-
-rm_dnrp1=np.abs(rates_pd.loc[gene,'norm2max_dnrp1'])
-N_dnrp1=np.exp(rm_dnrp1*t)/(1+np.exp(rm_dnrp1*t)/K)
-
-fig = plt.figure(figsize=(12,5))
+K_dnrp1=np.sum(readpertransposon_pd.loc[:,'average_dnrp1'])# carrying capacity
+rm_dnrp1=np.abs(rates_pd.loc[gene,'average_dnrp1'])
+N_dnrp1=np.exp(rm_dnrp1*t)/(1+np.exp(rm_dnrp1*t)/K_dnrp1)
+# gene = PFA5 # max for dnrp1 
+fig = plt.figure(figsize=(13,5))
 ax = fig.add_subplot(121)
 ax2 = fig.add_subplot(122)
-ax.scatter(x=t,y=N_wt,label='WT_backg')
-ax2.scatter(x=t,y=N_dnrp1,label='dnrp1_back',color='k')
+ax.scatter(x=t,y=N_wt,label='WT_backg',color='k')
+ax.set_ylim(0,K_wt/100+100)
+ax.hlines(K_wt/100,0,t[-1],label='K/100')
+ax2.scatter(x=t,y=N_dnrp1,label='dnrp1_back',color='blue')
+ax2.set_ylim(0,K_dnrp1/100+100)
+ax2.hlines(K_dnrp1/100,0,t[-1],label='K/100')
+
 
 for axes in [ax,ax2]:
     axes.legend()
@@ -196,3 +214,6 @@ for axes in [ax,ax2]:
     axes.set_xlabel('Time-hours')
     axes.set_title(gene)
 
+#%% saving the figure
+
+fig.savefig('intergenic_model_growth_gene_'+gene+'.png',dpi=300,format='png')

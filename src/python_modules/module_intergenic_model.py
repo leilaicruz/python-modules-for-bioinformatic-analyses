@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt 
 
-def getting_r(datasets): 
+def getting_r(datasets,time=False): 
     """
     This function computes the maximum rates per gene,effectively the fitness for 
     a strain with a knockout in gene X, given an intergenic model . The intergenic model assumes a 
@@ -35,17 +35,30 @@ def getting_r(datasets):
         array containing the reads per transposons per dataset. 
 
     """
+    ## add a for loop over times and compute the rates over those times and averaged them out and std 
     total_reads=[]
     T=90
+    interval=np.linspace(1,90,10)
     r=[]
     reads_per_transposons=[]
+    r_t=np.zeros(shape=(len(datasets),len(datasets[0]),len(interval)))
     for i in np.arange(0,len(datasets)):
+        
         total_reads=np.sum(datasets[i]['number_of_read_per_gene'])
         total_tn=np.sum(datasets[i]['number_of_transposon_per_gene'])
         K=total_reads/total_tn
-        N=datasets[i]['number_of_read_per_gene']/datasets[i]['number_of_transposon_per_gene']
-        r.append(np.log(N/(1-N/K))/T)
+        N=datasets[i]['number_of_read_per_gene']/(datasets[i]['number_of_transposon_per_gene']-1)#there is one more transposon from the maximum reads
+        
         reads_per_transposons.append(N)
+        if time==False:
+            r.append(np.log(N/(1-N/K))/T)
+        if time==True: # NOT WORKING YET 
+            for t in np.arange(0,len(interval)):
+                 
+                 r_t.append(np.log(N/(1-N/K))/interval[t])
+                 
+                 
+                
         
        
     
