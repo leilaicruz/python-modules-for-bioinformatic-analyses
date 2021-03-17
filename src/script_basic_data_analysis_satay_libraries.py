@@ -129,7 +129,15 @@ ax2.text(x=nonessentials.median(),y=3000,s='median-non-essentials')
 
 #%% saving the figure
 fig.savefig('Number-of-transposons-per-gene-according-essentiality.png',dpi=300,format='png',transparent=False)
+#%% Looking for regions devoid of transposons 
+
+difficult_genes=data_wt[data_wt['Ninsertions']==0]
+
+difficult_genes_essentials=difficult_genes[difficult_genes['Essentiality']==1]
+
 #%% Loooking at correlations with essential genes 
+fig = plt.figure(figsize=(11,5))
+ax = fig.add_subplot(111)
 sns.pairplot(data=data_wt,vars=['Ninsertions','tr-density'],hue='Essentiality')
 
 
