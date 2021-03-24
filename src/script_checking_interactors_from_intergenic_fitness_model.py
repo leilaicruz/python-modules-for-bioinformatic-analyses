@@ -82,10 +82,12 @@ fig.savefig('heatmap-existing-interactors-vs-log2fc.png',format='png',dpi=300,tr
 
 #%% Plotting the constanzo SGA scores vs my scores out of fitness values 
 
+column_wt='wt_rates_intergenic_merged_hand'
+column_dnrp1='dnrp1_rates_intergenic_merged_hand'
 #score_fitness=fitness(dgenednrp1)-fitness(nrp1)fitness(gene)
-cte=fitness_values.loc['NRP1','wt_r']
-norm_wt=fitness_values.loc[:,'average_wt'].max()
-norm_dnrp1=fitness_values.loc[:,'average_dnrp1'].max()
+cte=fitness_values.loc['NRP1',column_wt]
+norm_wt=fitness_values.loc['HO',column_wt]
+norm_dnrp1=fitness_values.loc['HO',column_dnrp1]
 
 
 fig = plt.figure(figsize=(10,5))
@@ -97,14 +99,15 @@ ax = fig.add_subplot(111)
 
        
         
-
+true_scores=0
 for i in nrp1_positive:
-    scores=(fitness_values.loc[i,'average_dnrp1']/norm_dnrp1-cte*fitness_values.loc[i,'average_wt']/norm_wt**2)
+    scores=(fitness_values.loc[i,column_dnrp1]/norm_dnrp1-cte*fitness_values.loc[i,column_wt]/norm_wt**2)#normalized to HO locus 
     scores_sga=(nrp1_interactors[nrp1_interactors['Interactor.1']==i]['SGA score'].tolist()[0])
     ax.scatter(x=scores_sga,y=scores,label='positive by Constanzo',color='green',alpha=0.4)
     if scores>0:
         ax.scatter(x=scores_sga,y=scores,label='positive by Constanzo',color='green')
-        ax.text(x=scores_sga,y=scores,s=i)
+        ax.text(x=scores_sga,y=scores,s=i,fontsize=7.5,rotation=50)
+        true_scores=true_scores+1
 
 
 
@@ -116,17 +119,18 @@ for i in nrp1_negative:
     if scores<=0:
         ax.scatter(x=scores_sga,y=scores,label='negative by Constanzo',color='purple')
         ax.text(x=scores_sga,y=scores,s=i,fontsize=7.5,rotation=50)
+        true_scores=true_scores+1
 
 
 ax.set_title('Constanzo interactors')
 ax.set_xlabel('Scores_SGA')
 ax.grid()
 ax.set_ylabel('Scores_intergenic model')
-ax.set_ylim(-0.3,0.3)
-ax.set_xlim(-0.3,0.2)
+# ax.set_ylim(-0.3,0.3)
+# ax.set_xlim(-0.3,0.2)
 
 
 
-fig.savefig('scores_intergenic_vs_constanzo_scores_nrp1.png',format='png',dpi=300,transparent=False)
+fig.savefig('merged_rel_to_HO_scores_intergenic_vs_constanzo_scores_nrp1.png',format='png',dpi=300,transparent=False)
 
 
