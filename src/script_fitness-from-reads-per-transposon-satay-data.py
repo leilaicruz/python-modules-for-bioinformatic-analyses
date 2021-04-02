@@ -14,13 +14,16 @@ import scipy
 
 from src.python_modules.module_intergenic_model import getting_r,pd_to_compare_libraries,filtering_significant_genes,viz_data
 #%% # Reads and transposon dataset
-path='datasets/Leila_10Feb21_PerGeneFiles/'
+path='datasets/greg_analysis_libraries_unpooled/'
+#path='datasets/Leila_10Feb21_PerGeneFiles/'
 files=os.listdir(path) # name of all the files 
 datasets=[]
 for i in np.arange(0,len(files)):
-    datasets.append(pd.read_csv(path+files[i],delimiter=" "))
+    datasets.append(pd.read_csv(path+files[i],delimiter="\t")) # tab \t for Greg , " " spaces for agnes dataset
+    datasets[i].columns=['gene_name','number_of_transposon_per_gene','number_of_read_per_gene']
 
-## Removing the ADE2 and URA3 gene reads and insertions from the population
+#%% Removing the ADE2 and URA3 gene reads and insertions from the population
+
 for i in np.arange(0,len(datasets)):
     datasets[i]=datasets[i][datasets[i].gene_name != 'ADE2']
     datasets[i]=datasets[i][datasets[i].gene_name != 'URA3']
@@ -34,11 +37,11 @@ for i in np.arange(0,len(datasets)):
 
 ## Getting the rates from the function : getting_r
 
-rates,reads_per_transposons=getting_r(datasets,time=False)
+rates,reads_per_transposons=getting_r(datasets,time=False,count_for_zero_tr=False)
 #%% Preparing datasets for analyses
-
-rates_pd=pd_to_compare_libraries(rates,datasets)
-readpertransposon_pd=pd_to_compare_libraries(reads_per_transposons,datasets)
+rates_pd=pd_to_compare_libraries(rates,datasets,files)
+readpertransposon_pd=pd_to_compare_libraries(reads_per_transposons,datasets,files)
+#datasets_pd=pd.concat(datasets,axis=0,keys=rates_pd.columns[0:6])
 
 #%% Plotting the differences from dnrp1 fitness vs WT fitness levels 
 
@@ -53,23 +56,27 @@ ax.set_ylabel('average reads per transposon dnrp1')
 # ax2.set_xlabel('average reads per transposon dnrp1')
 # ax2.set_ylabel('counts')
 for i in np.arange(0,len(rates_pd)):
-    x=readpertransposon_pd['average_wt'][i]
-    y=readpertransposon_pd['average_dnrp1'][i]
+    x=readpertransposon_pd['merged_wt'][i]*1.5# tobetter compare both merged libraries
+    y=readpertransposon_pd['merged_dnrp1'][i]
     ax.scatter(x,y,alpha=0.5,color='b')
-    if np.abs(x-y)>35:
-        ax.text(x*(1-0.02) ,y*(1+0.02) , readpertransposon_pd.index[i] , fontsize=3)
+    if np.abs(x-y)>180 :
+        ax.text(x*(1-0.02) ,y*(1+0.02) , readpertransposon_pd.index[i] , fontsize=4,rotation=15)
 
-ax.set_xlim(0,150)
-ax.set_ylim(0,150)
+# ax.set_xlim(0,700)
+# ax.set_ylim(0,700)
 #%% saving the plot
-fig.savefig('output_images/dnrp1-vs-wt-comparison-reads-per-transposons.png',format='png',dpi=300,transparent=True)
+fig.savefig('output_images/merged_dnrp1-vs-wt-comparison-reads-per-transposons_Greg.png',format='png',dpi=300,transparent=True)
 #%% significant genes
 test_rates=[]
 test_readpertransposon=[]
-
+rates_pd_wt=rates_pd.filter(regex='WT')
+rates_pd_nrp1=rates_pd.filter(regex='nrp')
+readpertransposon_pd_wt=readpertransposon_pd.filter(regex='WT')
+readpertransposon_pd_nrp1=readpertransposon_pd.filter(regex='nrp')
 for i in np.arange(0,len(rates_pd)):
-    test_rates.append(scipy.stats.ttest_ind(rates_pd.loc[rates_pd.index[i],['nrp1_1_a','nrp1_1_b','nrp1_2_a','nrp2_2_b']], rates_pd.loc[rates_pd.index[i],['wt_a','wt_b']]))
-    test_readpertransposon.append(scipy.stats.ttest_ind(readpertransposon_pd.loc[readpertransposon_pd.index[i],['nrp1_1_a','nrp1_1_b','nrp1_2_a','nrp2_2_b']], readpertransposon_pd.loc[readpertransposon_pd.index[i],['wt_a','wt_b']]))
+    
+    test_rates.append(scipy.stats.ttest_ind(rates_pd_nrp1.loc[rates_pd.index[i],:][0:3], rates_pd_wt.loc[rates_pd.index[i],:][0:2]))
+    test_readpertransposon.append(scipy.stats.ttest_ind(readpertransposon_pd_nrp1.loc[rates_pd.index[i],:][0:3], readpertransposon_pd_wt.loc[rates_pd.index[i],:][0:2]))
 ### FC and p-value or volcano on fitness 
 
 for i in np.arange(0,len(rates_pd)):
@@ -88,8 +95,8 @@ for i in np.arange(0,len(rates_pd)):
         readpertransposon_pd.loc[readpertransposon_pd.index[i],'fc_log2']=np.log2(value)
         readpertransposon_pd.loc[readpertransposon_pd.index[i],'-log_p']=-1*np.log10(test_readpertransposon[i][1])
     else:
-        readpertransposon_pd.loc[readpertransposon_pd.index[i],'FC']=0
-        readpertransposon_pd.loc[readpertransposon_pd.index[i],'fc_log2']=0
+        readpertransposon_pd.loc[readpertransposon_pd.index[i],'FC']=25/(5-1)
+        readpertransposon_pd.loc[readpertransposon_pd.index[i],'fc_log2']=np.log2(25/(5-1))
         readpertransposon_pd.loc[readpertransposon_pd.index[i],'-log_p']=0
         
         
@@ -103,36 +110,37 @@ readpertransposon_pd['-log_p'].fillna(0,inplace=True)
 
 fig = plt.figure(figsize=(12,8))
 ax = fig.add_subplot(121)
-ax.plot(rates_pd['fc_log2'],rates_pd['-log_p'],'bo')
+ax.plot(rates_pd['fc_log2'],rates_pd['-log_p'],'bo',alpha=0.3)
 ax.set_xlim(-10,10)
 ax.set_title('fitness-from-intergenic-model')
+ax.set_ylabel('-log(p)')
+ax.set_xlabel('log2(FC)')
 
 ax2 = fig.add_subplot(122)
-ax2.plot(readpertransposon_pd['fc_log2'],readpertransposon_pd['-log_p'],'bo')
+ax2.plot(readpertransposon_pd['fc_log2'],readpertransposon_pd['-log_p'],'bo',alpha=0.3)
 ax2.set_xlim(-10,10)
 ax2.set_title('reads-per-transposons')
+ax2.set_ylabel('-log(p)')
+ax2.set_xlabel('log2(FC)')
 
 for i in np.arange(0,len(rates_pd)):
     x=rates_pd['fc_log2'][i]
     y=rates_pd['-log_p'][i]
     if np.abs(x)>5 and y>2:
         ax.plot(x, y, 'ro')
-    ax.text(x*(1-0.02) ,y*(1+0.02) , rates_pd.index[i] , fontsize=5)
+        ax.text(x*(1-0.02) ,y*(1+0.02) , rates_pd.index[i] , fontsize=5)
     
 for i in np.arange(0,len(readpertransposon_pd)):
     x=readpertransposon_pd['fc_log2'][i]
     y=readpertransposon_pd['-log_p'][i]
     if np.abs(x)>4 and y>1: 
         ax2.plot(x, y, 'ro')
-    ax2.text(x*(1-0.02) ,y*(1+0.02) , readpertransposon_pd.index[i] , fontsize=5)
+        ax2.text(x*(1-0.02) ,y*(1+0.02) , readpertransposon_pd.index[i] , fontsize=5)
 
 #%% saving figure
 
 fig.savefig('volcano-fitness-alldnrp1v-s-WT.png', format='png',dpi=300)
-#%% exporting datasets
 
-readpertransposon_pd.to_excel('datasets/reads-per-transposons-agnes-sequencing.xlsx')
-rates_pd.to_excel('datasets/fitness-from-intergenic-model-agnes-sequencing.xlsx')
 
 #%% Filtering significant genes
 
@@ -183,37 +191,103 @@ ax.set_xlabel('single knockout fitness')
 ax.set_ylabel('double knockout fitness: dnrp1dgenex')
 fig.savefig('significant-dnrp1-fitness-map-from-satay.png',dpi=300,transparent=False,format='png')
 
+
+#%% reads per transposons vs fitness values 
+correction_factor=readpertransposon_pd['merged_dnrp1'].mean()/readpertransposon_pd['merged_wt'].mean()
+N_wt=readpertransposon_pd['merged_wt']*correction_factor
+T=90
+#K=np.sum(N)
+K_wt=np.max(N_wt)
+rates_pd['wt_rates_intergenic_merged_hand']=np.log(N_wt/(1-N_wt/K_wt))/T
+ref_HO_wt=rates_pd.loc['HO','wt_rates_intergenic_merged_hand']
+
+
+
+N_dnrp1=readpertransposon_pd['merged_dnrp1']
+K_dnrp1=np.max(N_dnrp1)
+rates_pd['dnrp1_rates_intergenic_merged_hand']=np.log(N_dnrp1/(1-N_dnrp1/K_dnrp1))/T
+ref_HO_dnrp1=rates_pd.loc['HO','dnrp1_rates_intergenic_merged_hand']
+# not_valid_points=rates_pd[rates_pd['wt_rates_intergenic_merged_hand']==-np.inf]
+
+fig = plt.figure(figsize=(13,5))
+ax = fig.add_subplot(121)
+ax.scatter(readpertransposon_pd.loc[:,'merged_wt'],rates_pd.loc[:,'wt_rates_intergenic_merged_hand']/ref_HO_wt,alpha=0.5,color='b')
+ax2 = fig.add_subplot(122)
+ax2.scatter(readpertransposon_pd.loc[:,'merged_dnrp1'],rates_pd.loc[:,'dnrp1_rates_intergenic_merged_hand']/ref_HO_dnrp1,alpha=0.5,color='b')
+
+ax.set_title('Merged WT')
+ax2.set_title('Merged dnrp1')
+for axes in [ax,ax2]:
+    axes.set_ylabel('fitness values intergenic model')
+    axes.set_xlabel('reads per transposon per gene')
+    #axes.set_xlim(0,0.12)
+    #axes.set_ylim(0,K_dnrp1)
+    axes.grid()
+## to plot genes on top
+gene='HO'
+x=readpertransposon_pd.loc[gene,'merged_wt']
+y=rates_pd.loc[gene,'wt_rates_intergenic_merged_hand']/ref_HO_wt
+ax.annotate(gene,(x*(1-0.02) ,y*(1+0.02)),size=10, c='green', bbox=dict(boxstyle="round", fc="w"))
+
+
+x=readpertransposon_pd.loc[gene,'merged_dnrp1']
+y=rates_pd.loc[gene,'dnrp1_rates_intergenic_merged_hand']/ref_HO_wt
+ax2.annotate(gene,(x*(1-0.02) ,y*(1+0.02)),size=10, c='green', bbox=dict(boxstyle="round", fc="w"))
+
+#%%    
+fig.savefig('HO_relative_merged_rates_intergenic_model_vs_reads_per_tr_Greg_'+gene+'.png',dpi=300,format='png')
+
 #%% Intergenic model per gene in the population
 
-K_wt=np.sum(readpertransposon_pd.loc[:,'average_wt'])# carrying capacity
-gene='BEM3'
+correction_factor=readpertransposon_pd['merged_dnrp1'].mean()/readpertransposon_pd['merged_wt'].mean()
+
+K_wt=correction_factor*(readpertransposon_pd.loc[:,'merged_wt']).max()# carrying capacity
+gene='MEC1'
 #gene=MED11 essential for WT and not for nrp1
 # gene = MPM1  # max for wt
-t=np.linspace(0,90)
-rm_wt=np.abs(rates_pd.loc[gene,'average_wt'])
-N_wt=np.exp(rm_wt*t)/(1+np.exp(rm_wt*t)/K_wt)
+t=np.linspace(0,90,200)
 
-K_dnrp1=np.sum(readpertransposon_pd.loc[:,'average_dnrp1'])# carrying capacity
-rm_dnrp1=np.abs(rates_pd.loc[gene,'average_dnrp1'])
-N_dnrp1=np.exp(rm_dnrp1*t)/(1+np.exp(rm_dnrp1*t)/K_dnrp1)
+rm_wt=np.abs(rates_pd.loc[gene,'wt_rates_intergenic_merged_hand'])
+
+ref_HO_wt=rates_pd.loc['HO','wt_rates_intergenic_merged_hand']
+r_relative_wt=rm_wt/ref_HO_wt
+
+#N_wt=np.exp(rm_wt*t)/(1+np.exp(rm_wt*t)/K_wt)
+N_wt=correction_factor*np.exp(r_relative_wt*t)/(1+np.exp(r_relative_wt*t)/K_wt)# to compare more fair both libraries
+
+
+
+K_dnrp1=(readpertransposon_pd.loc[:,'merged_dnrp1']).max()# carrying capacity
+rm_dnrp1=np.abs(rates_pd.loc[gene,'dnrp1_rates_intergenic_merged_hand'])
+ref_HO_dnrp1=rates_pd.loc['HO','dnrp1_rates_intergenic_merged_hand']
+r_relative_dnrp1=rm_dnrp1/ref_HO_wt
+
+#N_dnrp1=np.exp(rm_dnrp1*t)/(1+np.exp(rm_dnrp1*t)/K_dnrp1)
+N_dnrp1=np.exp(r_relative_dnrp1*t)/(1+np.exp(r_relative_dnrp1*t)/K_dnrp1)
 # gene = PFA5 # max for dnrp1 
 fig = plt.figure(figsize=(13,5))
 ax = fig.add_subplot(121)
 ax2 = fig.add_subplot(122)
 ax.scatter(x=t,y=N_wt,label='WT_backg',color='k')
-ax.set_ylim(0,K_wt/100+100)
-ax.hlines(K_wt/100,0,t[-1],label='K/100')
+ax.set_ylim(0,K_wt*correction_factor+K_wt/10)
+ax.hlines(K_wt*correction_factor,0,t[-1],label='K')
 ax2.scatter(x=t,y=N_dnrp1,label='dnrp1_back',color='blue')
-ax2.set_ylim(0,K_dnrp1/100+100)
-ax2.hlines(K_dnrp1/100,0,t[-1],label='K/100')
+ax2.set_ylim(0,K_dnrp1+K_dnrp1/10)
+ax2.hlines(K_dnrp1,0,t[-1],label='K')
 
 
 for axes in [ax,ax2]:
     axes.legend()
-    axes.set_ylabel('Reads per transposons')
+    axes.set_ylabel('Reads per transposons given by the model')
     axes.set_xlabel('Time-hours')
     axes.set_title(gene)
+    axes.set_xticks(np.linspace(0,90,13))
 
 #%% saving the figure
 
-fig.savefig('intergenic_model_growth_gene_'+gene+'.png',dpi=300,format='png')
+fig.savefig('merged_relative_HO_intergenic_model_growth_gene_'+gene+'.png',dpi=300,format='png')
+
+#%% exporting datasets
+
+readpertransposon_pd.to_excel('datasets/reads-per-transposons-greg-sequencing.xlsx')
+rates_pd.to_excel('datasets/fitness-from-intergenic-model-greg-sequencing.xlsx')

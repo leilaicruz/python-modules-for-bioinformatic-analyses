@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+with# -*- coding: utf-8 -*-
 """
 Created on Sun Feb 28 10:23:15 2021
 
@@ -18,7 +18,7 @@ interactions_biogrid=pd.read_excel('datasets/data-BioGrid-Yeast.xlsx')
 #%%
 data=pd.read_csv('datasets/NRP1_genetic_interactions_filtered_by_Costanzo.txt', delimiter = "\t",header=7)
 #%%
-fitness_values=pd.read_excel('datasets/fitness-from-intergenic-model-agnes-sequencing.xlsx')
+fitness_values=pd.read_excel('datasets/fitness-from-intergenic-model-greg-sequencing.xlsx')
 fitness_values.index=fitness_values['gene_name']
 #%% Looking for nrp1 existing interactors
 interactions_biogrid=data
@@ -90,7 +90,7 @@ norm_wt=fitness_values.loc['HO',column_wt]
 norm_dnrp1=fitness_values.loc['HO',column_dnrp1]
 
 
-fig = plt.figure(figsize=(10,5))
+fig = plt.figure(figsize=(7,7))
 ax = fig.add_subplot(111)
 
 # for i in data['Interactor.1']:
@@ -101,7 +101,7 @@ ax = fig.add_subplot(111)
         
 true_scores=0
 for i in nrp1_positive:
-    scores=(fitness_values.loc[i,column_dnrp1]/norm_dnrp1-cte*fitness_values.loc[i,column_wt]/norm_wt**2)#normalized to HO locus 
+    scores=(fitness_values.loc[i,column_dnrp1]/norm_wt-cte*fitness_values.loc[i,column_wt]/norm_wt**2)#normalized to HO locus from WT 
     scores_sga=(nrp1_interactors[nrp1_interactors['Interactor.1']==i]['SGA score'].tolist()[0])
     ax.scatter(x=scores_sga,y=scores,label='positive by Constanzo',color='green',alpha=0.4)
     if scores>0:
@@ -116,7 +116,7 @@ for i in nrp1_negative:
     scores=(fitness_values.loc[i,'average_dnrp1']/norm_dnrp1-cte*fitness_values.loc[i,'average_wt']/norm_wt**2)
     scores_sga=(nrp1_interactors[nrp1_interactors['Interactor.1']==i]['SGA score'].tolist()[0])
     ax.scatter(x=scores_sga,y=scores,label='negative by Constanzo',color='purple',alpha=0.4)
-    if scores<=0:
+    if scores<0:
         ax.scatter(x=scores_sga,y=scores,label='negative by Constanzo',color='purple')
         ax.text(x=scores_sga,y=scores,s=i,fontsize=7.5,rotation=50)
         true_scores=true_scores+1
@@ -126,11 +126,11 @@ ax.set_title('Constanzo interactors')
 ax.set_xlabel('Scores_SGA')
 ax.grid()
 ax.set_ylabel('Scores_intergenic model')
-# ax.set_ylim(-0.3,0.3)
-# ax.set_xlim(-0.3,0.2)
+ax.set_ylim(-0.6,0.35)
+ax.set_xlim(-0.6,0.35)
 
 
 
-fig.savefig('merged_rel_to_HO_scores_intergenic_vs_constanzo_scores_nrp1.png',format='png',dpi=300,transparent=False)
+fig.savefig('merged_rel_to_HO_scores_intergenic_vs_constanzo_scores_nrp1-Greg.png',format='png',dpi=300,transparent=False)
 
 

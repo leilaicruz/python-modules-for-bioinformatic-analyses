@@ -12,6 +12,8 @@ from collections import defaultdict
 import os
 import seaborn as sns
 import scipy 
+
+from src.python_modules.module_analysis_transposon_sites import *
 #%% Import of dataframes output from the SATAY pipeline
 
 names_libraries={'wt':'WT-merged-all.xlsx','dnrp1':'dnrp1-merged-all.xlsx','wt_agnes':'WT-merged-Agnes.xlsx','wt_strong_alig':'WT-merged-astringent-alignment.xlsx'}
@@ -22,48 +24,8 @@ for i in names_libraries.keys():
 
 data_library_pd=pd.concat(data_library,keys=names_libraries.keys(),sort=True)
 data_library_pd.fillna(0,inplace=True)
-#%% Analysis of transposition sites
 
-def frequency_transposons(data,names_libraries):
-    freq=[]
-    for i in names_libraries.keys():
-        freq.append(data.loc[i]['Nbasepairs'].sum()/data.loc[i]['Ninsertions'].sum())
-        
-    return freq
 
-def reads_per_transposon(data,names_libraries):
-    readspertr=[]
-    for i in names_libraries.keys():
-        readspertr.append(data.loc[i]['Nreads'].median()/data.loc[i]['Ninsertions'].median())
-        
-    return readspertr
-    
-def transposon_density(data,names_libraries):
-    density=[]
-    for i in names_libraries.keys():
-        
-        density.append(data.loc[i]['Ninsertions']/data.loc[i]['Nbasepairs'])        
-    return density
-def median_feature(data,names_libraries,feature):
-    median_feature=[]
-    for i in names_libraries.keys():
-        
-        median_feature.append(data.loc[i][feature].median())        
-    return median_feature
-    
-def median_feature_essentials(data,names_libraries,feature):
-    median_feature=[]
-    for i in names_libraries.keys():
-        
-        median_feature.append(data.loc[i][data.loc[i]['Essentiality']==1][feature].median())        
-    return median_feature
-    
-def median_feature_nonessentials(data,names_libraries,feature):
-    median_feature=[]
-    for i in names_libraries.keys():
-        
-        median_feature.append(data.loc[i][data.loc[i]['Essentiality']==0][feature].median())        
-    return median_feature
 #%%
 freq=frequency_transposons(data_library_pd,names_libraries)
 reads_per_transposon=reads_per_transposon(data_library_pd,names_libraries)
