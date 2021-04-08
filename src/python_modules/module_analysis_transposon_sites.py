@@ -54,3 +54,14 @@ def median_feature_nonessentials(data,names_libraries,feature):
         
         median_feature.append(data.loc[i][data.loc[i]['Essentiality']==0][feature].median())        
     return median_feature
+
+# Zoom in per chromosome
+def local_variation(chrom,windows,data,column):
+    
+    df=data[data.loc[:,'chromosome']==chrom]
+    
+    mean_values = df[column].rolling(windows).mean()[::windows]
+            
+    std_values = df[column].rolling(windows).std()[::windows]
+    
+    return mean_values,std_values
