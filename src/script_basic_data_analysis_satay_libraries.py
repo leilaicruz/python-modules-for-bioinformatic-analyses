@@ -62,8 +62,11 @@ data_wt['tr-density']=data_wt['Ninsertions']/data_wt['Nbasepairs']
 data_wt_agnes['tr-density']=data_wt_agnes['Ninsertions']/data_wt_agnes['Nbasepairs']
 data_wt_greg2['tr-density']=data_wt_greg2['Ninsertions']/data_wt_greg2['Nbasepairs']
 #%% Reads per transposons
-data_wt['reads-per-tr']=(data_wt['Nreads']/data_wt['Ninsertions'])/data_wt['Nbasepairs']
-data_wt_agnes['reads-per-tr']=(data_wt_agnes['Nreads']/data_wt_agnes['Ninsertions'])/data_wt_agnes['Nbasepairs']
+# data_wt['reads-per-tr']=(data_wt['Nreads']/data_wt['Ninsertions'])/data_wt['Nbasepairs']
+# data_wt_agnes['reads-per-tr']=(data_wt_agnes['Nreads']/data_wt_agnes['Ninsertions'])/data_wt_agnes['Nbasepairs']
+
+data_wt['reads-per-tr']=(data_wt['Nreads']/data_wt['Ninsertions'])
+data_wt_agnes['reads-per-tr']=(data_wt_agnes['Nreads']/data_wt_agnes['Ninsertions'])
 #%% Plot transposon density (fig 1B Benoit) highlighting the centromere position
 
 fig = plt.figure(figsize=(10,5))
@@ -168,14 +171,15 @@ ax2.set_ylabel('Ninsertions per bp')
 ax3 = plt.subplot(grid[2,0])
 ax3.errorbar(data_wt.loc[:,'chromosome'].unique(), mean_wt_chrom_readspertr,std_wt_chrom_readspertr, marker='s', mfc='red',
          mec='green', ms=10, mew=1,capsize=4)
-ax3.set_ylabel('Nreads per Ninsertions per bp')
-#%% assesing local variation per chromosome
+ax3.set_ylabel('Nreads per Ninsertions')
+#%% assesing local variation per chromosome. Viz per chromosome
 
 magnitudes=['Ninsertions','tr-density','reads-per-tr']
 chromosomes=data_wt.loc[:,'chromosome'].unique()
 
 windows=10
 chrom=chromosomes[4]
+
 
 fig=plt.figure(figsize=(10,9))
 grid = plt.GridSpec(3, 1, wspace=0.0, hspace=0.0)
@@ -206,9 +210,40 @@ ax3.errorbar(np.arange(0,len(data_wt[data_wt.loc[:,'chromosome']==chrom]),window
 ax3.set_ylabel(magnitudes[2])
 #ax.set_xlabel('genes along the windows')
 
+#%% assesing local variation per chromosome. Visualizing more than one chromosome
+
+magnitudes=['Ninsertions','tr-density','reads-per-tr']
+chromosomes=data_wt.loc[:,'chromosome'].unique()
+
+windows=10
+
+chroms=[chromosomes[0],chromosomes[1],chromosomes[2],chromosomes[3]]
+
+fig=plt.figure(figsize=(20,20))
+grid = plt.GridSpec(3, len(chroms), wspace=0.0, hspace=0.0)
+
+for i in np.arange(0,len(chroms)):
+    for j in np.arange(0,len(magnitudes)): 
+        ax = plt.subplot(grid[j,i])
+       
+        mean_over_chromI,std_over_chromI=local_variation(chrom=chroms[i], windows=windows, data=data_wt,column=magnitudes[j])
+        chrom_data=pd.DataFrame([mean_over_chromI,std_over_chromI],index=['mean','std'])
+        
+        
+        ax.errorbar(np.arange(0,len(data_wt[data_wt.loc[:,'chromosome']==chroms[i]]),windows), chrom_data.loc['mean',:], chrom_data.loc['std',:], marker='s', 
+                    mfc='red', mec='green', ms=10, mew=1,capsize=4)
+        
+        
+    ax.set_title('Errorbars over chrom='+str(chroms[i])+', every '+str(windows)+'genes')
+
+fig.text(0.08, 0.5, magnitudes[1], va='center', rotation='vertical',fontsize=15)  
+fig.text(0.08, 0.75, magnitudes[0], va='center', rotation='vertical',fontsize=15)   
+fig.text(0.08, 0.25, magnitudes[2], va='center', rotation='vertical',fontsize=15)  
+# axlabel.set_ylabel(magnitudes[0],fontsize=15)     
+#ax.set_xlabel('genes along the windows')
 
 #%% saving the figure
-fig.savefig('variation-along-the-chromosome-tr-trdensity-readspertr_merged_wt.png',dpi=300,format='png',transparent=False)
+fig.savefig('local-variation-merged_wt-windows-'+str(windows)+'genes-'+ str(chroms)+'.png',dpi=300,format='png',transparent=False)
 #%% Histograms of number of transposons per gene
 fig = plt.figure(figsize=(10,5))
 ax = fig.add_subplot(111)

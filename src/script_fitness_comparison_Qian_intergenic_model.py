@@ -19,7 +19,7 @@ conversion.columns=['systematic_name','standard_name']
 qian_dataset=pd.read_excel('datasets/Gowthrate_Qian.xls',header=1)
 qian_dataset_SC=qian_dataset.loc[:,['ORF','SC fitness']]
 
-fitness_intergenic=pd.read_excel('datasets/fitness-from-intergenic-model-agnes-sequencing.xlsx')
+fitness_intergenic=pd.read_excel('datasets/fitness-from-intergenic-model-greg-sequencing.xlsx')
 fitness_intergenic.index=fitness_intergenic['gene_name']
 #%% Replacing the systematic names from QIan to standard names
 j=0
@@ -33,13 +33,16 @@ qian_dataset_SC.dropna(inplace=True)
 qian_dataset_SC.index=qian_dataset_SC['ORF_standard']
 
 #%% Comparing relative fitness by numbers
-column_wt='wt_rates_intergenic_merged_hand'
-column_dnrp1='dnrp1_rates_intergenic_merged_hand'
-norm_wt=fitness_intergenic.loc['HO',column_wt]
+#column_wt='wt_rates_intergenic_merged_hand'
+#column_dnrp1='dnrp1_rates_intergenic_merged_hand'
 
-norm_wt_fitness=fitness_intergenic[column_wt]/norm_wt
+column_wt='norm2HO_wt'
+column_dnrp1='norm2HOdnrp1'
+#norm_wt=fitness_intergenic.loc['HO',column_wt]
 
-
+#norm_wt_fitness=fitness_intergenic[column_wt]/norm_wt
+norm_wt_fitness=fitness_intergenic[column_wt]
+norm_dnrp1_fitness=fitness_intergenic[column_dnrp1]
 qian_dataset_SC_fitness=qian_dataset_SC['SC fitness']
 
 similar_fitness=[]
@@ -64,22 +67,24 @@ ax = fig.add_subplot(111)
 for genes in qian_dataset_SC.index:
     if genes in norm_wt_fitness.index:
         #ax.scatter(x=norm_wt_fitness[genes],y=qian_dataset_SC_fitness[genes],color='blue',alpha=0.6)
-        ax.scatter(x=average_all_datasets_intergenic_normed[genes],y=qian_dataset_SC_fitness[genes],color='blue',alpha=0.6)
+        ax.scatter(x=norm_wt_fitness[genes],y=qian_dataset_SC_fitness[genes],color='blue',alpha=0.4,label='WT')
+        ax.scatter(x=norm_dnrp1_fitness[genes],y=qian_dataset_SC_fitness[genes],color='orange',alpha=0.5,label='dnrp1')
 
-ax.set_ylim(0,1.5)
-ax.set_xlim(0,1.5)
+ax.set_ylim(0,1.2)
+ax.set_xlim(0,1.2)
 ax.set_ylabel('Qian  SC fitness values ')
 ax.set_xlabel('Intergenic model fitness relative values to HO ')
 
-ax.plot(np.linspace(0,1.5),np.linspace(0,1.5),color='black',linewidth=5,alpha=0.6)
+
+ax.plot(np.linspace(0,1.5),np.linspace(0,1.5),color='black',linewidth=10,alpha=0.4)
 #%% histograms
 fig = plt.figure(figsize=(10,5))
 ax = fig.add_subplot(121)
 #a=fitness_intergenic[fitness_intergenic[column_dnrp1]!=-np.inf][column_dnrp1]
 a=average_all_datasets_intergenic[average_all_datasets_intergenic!=-np.inf]
 a_new=a[a!=np.inf]
-a_new_norm=a_new/norm_wt
-ax.hist(a_new_norm)
+#a_new_norm=a_new/norm_wt
+#ax.hist(a_new_norm)
 ax.set_xlabel('Satay to HO')
 
 ax1 = fig.add_subplot(122)
@@ -107,8 +112,8 @@ y=fitness_intergenic
 #ax.hist(average_merged_normed,color='orange',alpha=0.7,label='wt_b')
 # ax.legend()
 #%%
-replicate_differences=np.abs(x['wt_a']/norm_wt-x['wt_b']/norm_wt)
+#replicate_differences=np.abs(x['wt_a']/norm_wt-x['wt_b']/norm_wt)
 
 #%% save this figure
 
-fig.savefig('average hist_all_datasets_fitness_Qian_vs_intergenic.png',format='png',dpi=300,transparent=False)
+fig.savefig('Greg_datasets_fitness_Qian_vs_intergenic.png',format='png',dpi=300,transparent=False)

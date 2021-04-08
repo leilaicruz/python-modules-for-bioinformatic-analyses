@@ -37,12 +37,14 @@ for i in np.arange(0,len(datasets)):
 
 ## Getting the rates from the function : getting_r
 
-rates,reads_per_transposons=getting_r(datasets,time=False,count_for_zero_tr=False)
-#%% Preparing datasets for analyses
-rates_pd=pd_to_compare_libraries(rates,datasets,files)
-readpertransposon_pd=pd_to_compare_libraries(reads_per_transposons,datasets,files)
-#datasets_pd=pd.concat(datasets,axis=0,keys=rates_pd.columns[0:6])
+rates,reads_per_transposons,non_index=getting_r(datasets,count_for_zero_tr=True)
 
+#%% Preparing datasets for analyses
+rates_pd=pd_to_compare_libraries(rates,files,datasets,norm=True)
+readpertransposon_pd=pd_to_compare_libraries(reads_per_transposons,files,datasets,norm=True)
+
+#rates_pd.index=datasets[0].loc[rates_pd.index,'gene_name']
+#readpertransposon_pd.index=datasets[0].loc[readpertransposon_pd.index,'gene_name']
 #%% Plotting the differences from dnrp1 fitness vs WT fitness levels 
 
 fig = plt.figure(figsize=(10,5))
@@ -157,14 +159,16 @@ viz_data(rates_pd,log_p_value_th,log2_fc_th,filenames='fitness-from-intergenic-m
 
 #%% Fitness plots
 
-plt.plot(rates_pd.loc[:,'norm2max_wt'],rates_pd.loc[:,'norm2max_dnrp1'],'bo',alpha=0.2)
+columnA='norm2HO_wt'
+columnB='norm2HOdnrp1'
+plt.plot(rates_pd.loc[:,columnA],rates_pd.loc[:,columnB],'bo',alpha=0.2)
 
-plt.plot(np.linspace(0,1),np.linspace(0,1)*rates_pd.loc['NRP1','norm2max_wt'],linewidth=4,alpha=0.4,color='k')
-plt.plot(np.linspace(0,rates_pd.loc['NRP1','norm2max_wt']),np.linspace(0,rates_pd.loc['NRP1','norm2max_wt']),linewidth=4,alpha=0.4,color='k')
-plt.hlines(rates_pd.loc['NRP1','norm2max_wt'],rates_pd.loc['NRP1','norm2max_wt'],1,linewidth=4,alpha=0.4,color='k')
+plt.plot(np.linspace(0,2),np.linspace(0,1)*rates_pd.loc['NRP1',columnA],linewidth=4,alpha=0.4,color='k')
+plt.plot(np.linspace(0,rates_pd.loc['NRP1',columnA]),np.linspace(0,rates_pd.loc['NRP1',columnA]),linewidth=4,alpha=0.4,color='k')
+plt.hlines(rates_pd.loc['NRP1',columnA],rates_pd.loc['NRP1',columnB],2,linewidth=4,alpha=0.4,color='k')
 
-plt.xlim(0,1)
-plt.ylim(0,1)
+plt.xlim(0,2)
+plt.ylim(0,2)
 plt.xlabel('single knockout fitness')
 plt.ylabel('double knockout fitness: dnrp1dgenex')
 #plt.savefig('dnrp1-fitness-map-from-satay.png',dpi=300,transparent=True,format='png')
@@ -197,23 +201,23 @@ correction_factor=readpertransposon_pd['merged_dnrp1'].mean()/readpertransposon_
 N_wt=readpertransposon_pd['merged_wt']*correction_factor
 T=90
 #K=np.sum(N)
-K_wt=np.max(N_wt)
+K_wt=np.sum(N_wt)
 rates_pd['wt_rates_intergenic_merged_hand']=np.log(N_wt/(1-N_wt/K_wt))/T
 ref_HO_wt=rates_pd.loc['HO','wt_rates_intergenic_merged_hand']
 
 
 
 N_dnrp1=readpertransposon_pd['merged_dnrp1']
-K_dnrp1=np.max(N_dnrp1)
+K_dnrp1=np.sum(N_dnrp1)
 rates_pd['dnrp1_rates_intergenic_merged_hand']=np.log(N_dnrp1/(1-N_dnrp1/K_dnrp1))/T
 ref_HO_dnrp1=rates_pd.loc['HO','dnrp1_rates_intergenic_merged_hand']
 # not_valid_points=rates_pd[rates_pd['wt_rates_intergenic_merged_hand']==-np.inf]
 
 fig = plt.figure(figsize=(13,5))
 ax = fig.add_subplot(121)
-ax.scatter(readpertransposon_pd.loc[:,'merged_wt'],rates_pd.loc[:,'wt_rates_intergenic_merged_hand']/ref_HO_wt,alpha=0.5,color='b')
+ax.scatter(readpertransposon_pd.loc[:,'merged_wt']*correction_factor,rates_pd.loc[:,'wt_rates_intergenic_merged_hand']/ref_HO_wt,alpha=0.5,color='b')
 ax2 = fig.add_subplot(122)
-ax2.scatter(readpertransposon_pd.loc[:,'merged_dnrp1'],rates_pd.loc[:,'dnrp1_rates_intergenic_merged_hand']/ref_HO_dnrp1,alpha=0.5,color='b')
+ax2.scatter(readpertransposon_pd.loc[:,'merged_dnrp1'],rates_pd.loc[:,'dnrp1_rates_intergenic_merged_hand']/ref_HO_wt,alpha=0.5,color='b')
 
 ax.set_title('Merged WT')
 ax2.set_title('Merged dnrp1')
@@ -224,8 +228,8 @@ for axes in [ax,ax2]:
     #axes.set_ylim(0,K_dnrp1)
     axes.grid()
 ## to plot genes on top
-gene='HO'
-x=readpertransposon_pd.loc[gene,'merged_wt']
+gene='BEM1'
+x=readpertransposon_pd.loc[gene,'merged_wt']*correction_factor
 y=rates_pd.loc[gene,'wt_rates_intergenic_merged_hand']/ref_HO_wt
 ax.annotate(gene,(x*(1-0.02) ,y*(1+0.02)),size=10, c='green', bbox=dict(boxstyle="round", fc="w"))
 
@@ -241,8 +245,8 @@ fig.savefig('HO_relative_merged_rates_intergenic_model_vs_reads_per_tr_Greg_'+ge
 
 correction_factor=readpertransposon_pd['merged_dnrp1'].mean()/readpertransposon_pd['merged_wt'].mean()
 
-K_wt=correction_factor*(readpertransposon_pd.loc[:,'merged_wt']).max()# carrying capacity
-gene='MEC1'
+K_wt=correction_factor*(readpertransposon_pd.loc[:,'merged_wt']).sum()# carrying capacity
+gene='HO'
 #gene=MED11 essential for WT and not for nrp1
 # gene = MPM1  # max for wt
 t=np.linspace(0,90,200)
@@ -257,7 +261,7 @@ N_wt=correction_factor*np.exp(r_relative_wt*t)/(1+np.exp(r_relative_wt*t)/K_wt)#
 
 
 
-K_dnrp1=(readpertransposon_pd.loc[:,'merged_dnrp1']).max()# carrying capacity
+K_dnrp1=(readpertransposon_pd.loc[:,'merged_dnrp1']).sum()# carrying capacity
 rm_dnrp1=np.abs(rates_pd.loc[gene,'dnrp1_rates_intergenic_merged_hand'])
 ref_HO_dnrp1=rates_pd.loc['HO','dnrp1_rates_intergenic_merged_hand']
 r_relative_dnrp1=rm_dnrp1/ref_HO_wt
