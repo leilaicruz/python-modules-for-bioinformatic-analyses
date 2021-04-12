@@ -20,13 +20,13 @@ names_libraries={'wt':'WT-merged-all.xlsx','dnrp1':'dnrp1-merged-all.xlsx','wt_a
 data_library=[]
 for i in names_libraries.keys():
  data_library.append(pd.read_excel('datasets/'+names_libraries[i],index_col='Unnamed: 0'))
-#%% Creating a big dataframe of the libraries
+#### Creating a big dataframe of the libraries
 
 data_library_pd=pd.concat(data_library,keys=names_libraries.keys(),sort=True)
 data_library_pd.fillna(0,inplace=True)
 
 
-#%%
+##############
 freq=frequency_transposons(data_library_pd,names_libraries)
 reads_per_transposon=reads_per_transposon(data_library_pd,names_libraries)
 tr_density=transposon_density(data_library_pd,names_libraries)
@@ -55,24 +55,46 @@ data_wt_agnes=data_library_pd.loc['wt_agnes'].copy()
 data_wt_greg2=data_library_pd.loc['wt_strong_alig'].copy()
 
 
-#%% Transposon density vs genes 
-
+### Transposon density vs genes 
 
 data_wt['tr-density']=data_wt['Ninsertions']/data_wt['Nbasepairs']
 data_wt_agnes['tr-density']=data_wt_agnes['Ninsertions']/data_wt_agnes['Nbasepairs']
 data_wt_greg2['tr-density']=data_wt_greg2['Ninsertions']/data_wt_greg2['Nbasepairs']
-#%% Reads per transposons
-# data_wt['reads-per-tr']=(data_wt['Nreads']/data_wt['Ninsertions'])/data_wt['Nbasepairs']
-# data_wt_agnes['reads-per-tr']=(data_wt_agnes['Nreads']/data_wt_agnes['Ninsertions'])/data_wt_agnes['Nbasepairs']
+#%% Getting a better measure of the reads per transposons
+#- Discard the genes that has less than 25 reads 
+#- Discard the genes that has more 20% coverage of transposons (centromeres , bias genes), tr-density>0.2 (less than 3% of the data)
+#- Discard the genes that has less than 1% of coverage of transposons , tr-density<0.01 (around 7% of the genes that has less than 20% coverage)
+from functools import reduce
 
-data_wt['reads-per-tr']=(data_wt['Nreads']/data_wt['Ninsertions'])
-data_wt_agnes['reads-per-tr']=(data_wt_agnes['Nreads']/data_wt_agnes['Ninsertions'])
+tr_discard_singletr=data_wt[data_wt['Ninsertions']<2]
+tr_discard_highcoverage=data_wt[data_wt['tr-density']>0.2]
+tr_discard_lowcoverage=data_wt[data_wt['tr-density']<0.01]
+reads_exceptions=data_wt[data_wt['Nreads']<25]
+
+# exceptions_1=np.intersect1d(tr_discard_highcoverage.index,tr_discard_lowcoverage.index)
+# exceptions=np.intersect1d(exceptions_1,reads_exceptions.index)
+### adding all the discarded genes 
+d=[tr_discard_singletr.index,tr_discard_highcoverage.index,tr_discard_lowcoverage.index, reads_exceptions.index]
+exceptions=list(reduce(set.intersection, [set(item) for item in d ])) ## getting the intersection of all the indexes from the discarded genes
+
+d_new=[]
+for i in np.arange(0,len(d)):
+    for j in np.arange(0,len(d[i])):
+        d_new.append(d[i][j])
+    
+bad_df= data_wt.index.isin(np.unique(d_new))
+new_df=data_wt[~bad_df]
+
+for i in new_df.index:
+    data_wt.loc[i,'reads-per-tr']=data_wt.loc[i,'Nreads']/(data_wt.loc[i,'Ninsertions']-1)#there is one more transposon from the maximum reads
+
+
 #%% Plot transposon density (fig 1B Benoit) highlighting the centromere position
 
 fig = plt.figure(figsize=(10,5))
 ax = fig.add_subplot(111)
 ax.plot(data_wt['tr-density'],alpha=0.5,color='b')
-ax.set_ylabel('transposond density: tn/bp')
+ax.set_ylabel('transposon density: tn/bp')
 ax.set_xlabel('genes')
 ## annotated centromeres
 for i in np.arange(0,len(data_wt)):
@@ -112,38 +134,51 @@ for i in np.arange(0,len(data_wt_agnes)):
 fig.savefig('Transposon-density-WT-annotated-centromeres-Greg2_Agnes.png',dpi=300,format='png',transparent=False)
 #%%  Plot reads per transposon  highlighting the centromere position
 
-fig=plt.figure(figsize=(10,9))
-grid = plt.GridSpec(2, 1, wspace=0.0, hspace=0.0)
+fig=plt.figure(figsize=(15,15))
+grid = plt.GridSpec(3, 1, wspace=0.0, hspace=0.0)
 ax = plt.subplot(grid[0,0])
 ax2 = plt.subplot(grid[1,0])   
+ax3 = plt.subplot(grid[2,0])  
 
 ax.plot(data_wt['reads-per-tr'],alpha=0.7,color='b')
 ax.set_ylabel('reads per tr per bp')
 ax.set_xlabel('genes')
+ax.set_ylim(0,2000)
 ## annotated centromeres
 for i in np.arange(0,len(data_wt)):
     
     if data_wt.loc[i,'Feature_type']=='Centromere': 
    
-        ax.vlines(x=i,ymin=0,ymax=80,linestyles='--',alpha=0.3)
+        ax.vlines(x=i,ymin=0,ymax=1500,linestyles='--',alpha=0.3)
         #ax.text(x=i,y=4000,s='centromere',rotation=90,fontsize=8)
-    elif data_wt.loc[i,'reads-per-tr']>15:
-        ax.vlines(x=i,ymin=0,ymax=80,linestyles='-',alpha=0.5)
-        ax.text(x=i,y=70,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8)
+    elif data_wt.loc[i,'reads-per-tr']>500:
+        ax.vlines(x=i,ymin=0,ymax=2000,linestyles='-',alpha=0.2)
+        ax.text(x=i,y=1500,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8)
         
 
-ax2.plot(data_wt['tr-density'],alpha=0.7,color='b')
-ax2.set_ylabel('transposond density: tn/bp')
-
+ax2.plot(data_wt['Ninsertions'],alpha=0.7,color='b')
+ax2.set_ylabel('transposons')
+ax2.set_ylim(0,2000)
 ## annotated centromeres
 for i in np.arange(0,len(data_wt)):
     
     if data_wt.loc[i,'Feature_type']=='Centromere': 
    
-        ax2.vlines(x=i,ymin=0,ymax=0.8,linestyles='--',alpha=0.3)
-        ax2.text(x=i,y=0.6,s='centromere',rotation=90,fontsize=8)
+        ax2.vlines(x=i,ymin=0,ymax=2000,linestyles='--',alpha=0.3)
+        ax2.text(x=i,y=1000,s='centromere',rotation=90,fontsize=8)
+        
+ax3.plot(data_wt['Nreads'],alpha=0.7,color='b')
+ax3.set_ylabel('Reads')
+ax3.set_ylim(0,120000)
+## annotated centromeres
+for i in np.arange(0,len(data_wt)):
+    
+    if data_wt.loc[i,'Feature_type']=='Centromere': 
+   
+        ax3.vlines(x=i,ymin=0,ymax=120000,linestyles='--',alpha=0.3)
+        ax3.text(x=i,y=100000,s='centromere',rotation=90,fontsize=8)
 #%% saving the figure reads per transposon density
-fig.savefig('Reads-per-tr-merged-WT-Greg-along-genome.png',dpi=300,format='png',transparent=False)
+fig.savefig('Variability-along-genome.png',dpi=300,format='png',transparent=False)
 
 #%% determine the local variation of transposons along te genome 
 ## Data per chromosome
