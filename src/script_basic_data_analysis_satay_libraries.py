@@ -12,6 +12,7 @@ from collections import defaultdict
 import os
 import seaborn as sns
 import scipy 
+from functools import reduce
 
 from src.python_modules.module_analysis_transposon_sites import *
 #%% Import of dataframes output from the SATAY pipeline
@@ -20,20 +21,20 @@ names_libraries={'wt':'WT-merged-all.xlsx','dnrp1':'dnrp1-merged-all.xlsx','wt_a
 data_library=[]
 for i in names_libraries.keys():
  data_library.append(pd.read_excel('datasets/'+names_libraries[i],index_col='Unnamed: 0'))
-#%% Creating a big dataframe of the libraries
+#### Creating a big dataframe of the libraries
 
 data_library_pd=pd.concat(data_library,keys=names_libraries.keys(),sort=True)
 data_library_pd.fillna(0,inplace=True)
 
+################# Computing measures ######################
 
-#%%
 freq=frequency_transposons(data_library_pd,names_libraries)
 reads_per_transposon=reads_per_transposon(data_library_pd,names_libraries)
 tr_density=transposon_density(data_library_pd,names_libraries)
 median_insertions=median_feature(data_library_pd,names_libraries,'Ninsertions')
 median_insert_essentials=median_feature_essentials(data_library_pd,names_libraries,'Ninsertions')
 median_insert_nonessentials=median_feature_nonessentials(data_library_pd,names_libraries,'Ninsertions')
-#%%
+#%% Assembling the masure into a dataframe 
 analysis_libraries=defaultdict(dict)
 
 j=0
@@ -55,24 +56,25 @@ data_wt_agnes=data_library_pd.loc['wt_agnes'].copy()
 data_wt_greg2=data_library_pd.loc['wt_strong_alig'].copy()
 
 
-#%% Transposon density vs genes 
-
+### Transposon density vs genes 
 
 data_wt['tr-density']=data_wt['Ninsertions']/data_wt['Nbasepairs']
 data_wt_agnes['tr-density']=data_wt_agnes['Ninsertions']/data_wt_agnes['Nbasepairs']
 data_wt_greg2['tr-density']=data_wt_greg2['Ninsertions']/data_wt_greg2['Nbasepairs']
-#%% Reads per transposons
-# data_wt['reads-per-tr']=(data_wt['Nreads']/data_wt['Ninsertions'])/data_wt['Nbasepairs']
-# data_wt_agnes['reads-per-tr']=(data_wt_agnes['Nreads']/data_wt_agnes['Ninsertions'])/data_wt_agnes['Nbasepairs']
+#%% Get the reads per transpons 
+#%% Getting a better measure of the reads per transposons
+#- Discard the genes that has less than 25 reads 
+#- Discard the genes that has more 20% coverage of transposons (centromeres , bias genes), tr-density>0.2 (less than 3% of the data)
+#- Discard the genes that has less than 1% of coverage of transposons , tr-density<0.01 (around 7% of the genes that has less than 20% coverage)
+data_wt_filtered=filter_low_and_biased_reads_genes(data_wt)
+data_wt=data_wt_filtered
 
-data_wt['reads-per-tr']=(data_wt['Nreads']/data_wt['Ninsertions'])
-data_wt_agnes['reads-per-tr']=(data_wt_agnes['Nreads']/data_wt_agnes['Ninsertions'])
 #%% Plot transposon density (fig 1B Benoit) highlighting the centromere position
 
 fig = plt.figure(figsize=(10,5))
 ax = fig.add_subplot(111)
 ax.plot(data_wt['tr-density'],alpha=0.5,color='b')
-ax.set_ylabel('transposond density: tn/bp')
+ax.set_ylabel('transposon density: tn/bp')
 ax.set_xlabel('genes')
 ## annotated centromeres
 for i in np.arange(0,len(data_wt)):
@@ -112,52 +114,69 @@ for i in np.arange(0,len(data_wt_agnes)):
 fig.savefig('Transposon-density-WT-annotated-centromeres-Greg2_Agnes.png',dpi=300,format='png',transparent=False)
 #%%  Plot reads per transposon  highlighting the centromere position
 
-fig=plt.figure(figsize=(10,9))
-grid = plt.GridSpec(2, 1, wspace=0.0, hspace=0.0)
+fig=plt.figure(figsize=(15,15))
+grid = plt.GridSpec(3, 1, wspace=0.0, hspace=0.0)
 ax = plt.subplot(grid[0,0])
 ax2 = plt.subplot(grid[1,0])   
+ax3 = plt.subplot(grid[2,0])  
 
 ax.plot(data_wt['reads-per-tr'],alpha=0.7,color='b')
-ax.set_ylabel('reads per tr per bp')
+ax.set_ylabel('reads per tr')
 ax.set_xlabel('genes')
+ax.set_ylim(0,2000)
 ## annotated centromeres
 for i in np.arange(0,len(data_wt)):
     
     if data_wt.loc[i,'Feature_type']=='Centromere': 
    
-        ax.vlines(x=i,ymin=0,ymax=80,linestyles='--',alpha=0.3)
+        ax.vlines(x=i,ymin=0,ymax=1500,linestyles='--',alpha=0.3)
         #ax.text(x=i,y=4000,s='centromere',rotation=90,fontsize=8)
-    elif data_wt.loc[i,'reads-per-tr']>15:
-        ax.vlines(x=i,ymin=0,ymax=80,linestyles='-',alpha=0.5)
-        ax.text(x=i,y=70,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8)
+    elif data_wt.loc[i,'reads-per-tr']>500:
+        ax.vlines(x=i,ymin=0,ymax=2000,linestyles='-',alpha=0.2)
+        ax.text(x=i,y=1500,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8)
         
 
-ax2.plot(data_wt['tr-density'],alpha=0.7,color='b')
-ax2.set_ylabel('transposond density: tn/bp')
-
+ax2.plot(data_wt['Ninsertions'],alpha=0.7,color='b')
+ax2.set_ylabel('transposons')
+ax2.set_ylim(0,2000)
 ## annotated centromeres
 for i in np.arange(0,len(data_wt)):
     
     if data_wt.loc[i,'Feature_type']=='Centromere': 
    
-        ax2.vlines(x=i,ymin=0,ymax=0.8,linestyles='--',alpha=0.3)
-        ax2.text(x=i,y=0.6,s='centromere',rotation=90,fontsize=8)
+        ax2.vlines(x=i,ymin=0,ymax=2000,linestyles='--',alpha=0.3)
+        ax2.text(x=i,y=1000,s='centromere',rotation=90,fontsize=8)
+        
+ax3.plot(data_wt['Nreads'],alpha=0.7,color='b')
+ax3.set_ylabel('Reads')
+ax3.set_ylim(0,120000)
+## annotated centromeres
+for i in np.arange(0,len(data_wt)):
+    
+    if data_wt.loc[i,'Feature_type']=='Centromere': 
+   
+        ax3.vlines(x=i,ymin=0,ymax=120000,linestyles='--',alpha=0.3)
+        ax3.text(x=i,y=100000,s='centromere',rotation=90,fontsize=8)
 #%% saving the figure reads per transposon density
-fig.savefig('Reads-per-tr-merged-WT-Greg-along-genome.png',dpi=300,format='png',transparent=False)
+fig.savefig('Variability-along-genome-raw-data.png',dpi=300,format='png',transparent=False)
 
 #%% determine the local variation of transposons along te genome 
 ## Data per chromosome
+#from scipy.stats import sem 
 mean_wt_chrom=data_wt.groupby(by='chromosome')['Ninsertions'].mean()
-std_wt_chrom=data_wt.groupby(by='chromosome')['Ninsertions'].std()
+std_wt_chrom=data_wt.groupby(by='chromosome')['Ninsertions'].sem()
 
 mean_wt_chrom_trdensity=data_wt.groupby(by='chromosome')['tr-density'].mean()
-std_wt_chrom_trdensity=data_wt.groupby(by='chromosome')['tr-density'].std()
+std_wt_chrom_trdensity=data_wt.groupby(by='chromosome')['tr-density'].sem()
 
 mean_wt_chrom_readspertr=data_wt.groupby(by='chromosome')['reads-per-tr'].mean()
-std_wt_chrom_readspertr=data_wt.groupby(by='chromosome')['reads-per-tr'].std()
+std_wt_chrom_readspertr=data_wt.groupby(by='chromosome')['reads-per-tr'].sem()
+
+mean_wt_chrom_reads=data_wt.groupby(by='chromosome')['Nreads'].mean()
+std_wt_chrom_reads=data_wt.groupby(by='chromosome')['Nreads'].sem()
 
 fig=plt.figure(figsize=(10,9))
-grid = plt.GridSpec(3, 1, wspace=0.0, hspace=0.0)
+grid = plt.GridSpec(4, 1, wspace=0.0, hspace=0.0)
 ax = plt.subplot(grid[0,0])
 ax.errorbar(data_wt.loc[:,'chromosome'].unique(), mean_wt_chrom, std_wt_chrom, marker='s', mfc='red',
          mec='green', ms=10, mew=1,capsize=4)
@@ -172,13 +191,20 @@ ax3 = plt.subplot(grid[2,0])
 ax3.errorbar(data_wt.loc[:,'chromosome'].unique(), mean_wt_chrom_readspertr,std_wt_chrom_readspertr, marker='s', mfc='red',
          mec='green', ms=10, mew=1,capsize=4)
 ax3.set_ylabel('Nreads per Ninsertions')
+
+ax4 = plt.subplot(grid[3,0])
+ax4.errorbar(data_wt.loc[:,'chromosome'].unique(), mean_wt_chrom_reads,std_wt_chrom_reads, marker='s', mfc='red',
+         mec='green', ms=10, mew=1,capsize=4)
+ax4.set_ylabel('Nreads')
+#%% saving the figure 
+fig.savefig('Variability-along-genome-sem.png',dpi=300,format='png',transparent=False)
 #%% assesing local variation per chromosome. Viz per chromosome
 
 magnitudes=['Ninsertions','tr-density','reads-per-tr']
 chromosomes=data_wt.loc[:,'chromosome'].unique()
 
-windows=10
-chrom=chromosomes[4]
+windows=5
+chrom=chromosomes[5]
 
 
 fig=plt.figure(figsize=(10,9))
@@ -215,7 +241,7 @@ ax3.set_ylabel(magnitudes[2])
 magnitudes=['Ninsertions','tr-density','reads-per-tr']
 chromosomes=data_wt.loc[:,'chromosome'].unique()
 
-windows=10
+windows=5
 
 chroms=[chromosomes[0],chromosomes[1],chromosomes[2],chromosomes[3]]
 
@@ -297,13 +323,11 @@ difficult_genes=data_wt_agnes[data_wt_agnes['Ninsertions']==0]
 difficult_genes_essentials=difficult_genes[difficult_genes['Essentiality']==1]
 
 #%% Loooking at correlations with essential genes 
-fig = plt.figure(figsize=(11,5))
-ax = fig.add_subplot(111)
-sns.pairplot(data=data_wt_agnes,vars=['Ninsertions','tr-density'],hue='Essentiality')
+# fig = plt.figure(figsize=(11,5))
+# ax = fig.add_subplot(111)
+h=sns.pairplot(data=data_wt,vars=['Ninsertions','tr-density',  "reads-per-tr"],hue='Essentiality',corner=True,diag_kind="kde")
+h.map_lower(sns.kdeplot, levels=5, color="b")
 
+#%% saving the figure
+h.savefig('pairplot-essentiality-WT.png',dpi=300,format='png',transparent=False)
 
-#%% Looking at differences between libraries 
-fig = plt.figure(figsize=(11,5))
-
-plt.scatter(x=data_wt['tr-density'],y=data_wt_agnes['tr-density'])
-plt.plot(np.linspace(0,1),np.linspace(0,1))
