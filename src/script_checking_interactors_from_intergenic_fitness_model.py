@@ -12,6 +12,7 @@ import pandas as pd
 import os
 import seaborn as sns
 import scipy 
+from collections import defaultdict
 
 #%%
 interactions_biogrid=pd.read_excel('datasets/data-BioGrid-Yeast.xlsx')
@@ -44,38 +45,47 @@ cte=fitness_values_wt.loc['NRP1',column]/fitness_values_wt.loc['HO',column]
 norm_wt=fitness_values_wt[column]/fitness_values_wt.loc['HO',column]
 norm_dnrp1=fitness_values_dnrp1[column]/fitness_values_wt.loc['HO',column]
 
+fitness_values_wt.fillna(0,inplace=True)
+fitness_values_dnrp1.fillna(0,inplace=True)
+
+#%% Scores Satay
+
+scores_satay=defaultdict(dict)
+
+for i in fitness_values_wt.index:
+    scores_satay[i]['score']=(fitness_values_dnrp1.loc[i,'rates-intergenic'].mean()-cte*fitness_values_wt.loc[i,'rates-intergenic'].mean())
+#%%
+scores_satay_pd=pd.DataFrame(scores_satay)
+scores_satay_pd=scores_satay_pd.T
+
+
 #%%
 fig = plt.figure(figsize=(7,7))
 ax = fig.add_subplot(111)
 
-# for i in data['Interactor.1']:
-#     scores.append(fitness_values.loc[i,'average_dnrp1']/norm_dnrp1-cte*fitness_values.loc[i,'average_wt']/norm_wt**2)
-#     scores_sga.append(nrp1_interactors[nrp1_interactors['Interactor.1']==i]['SGA score'].tolist()[0])
-
-fitness_values_wt.fillna(0,inplace=True)
-fitness_values_dnrp1.fillna(0,inplace=True)
+      
        
-        
 true_scores=0
 for i in nrp1_positive:
-    scores=(fitness_values_dnrp1.loc[i,column]-cte*fitness_values_wt.loc[i,column])#normalized to HO locus from WT 
+       
     scores_sga=(nrp1_interactors[nrp1_interactors['Interactor.1']==i]['SGA score'].tolist()[0])
-    ax.scatter(x=scores_sga,y=scores,label='positive by Constanzo',color='green',alpha=0.4)
-    if scores>0:
-        ax.scatter(x=scores_sga,y=scores,label='positive by Constanzo',color='green')
-        ax.text(x=scores_sga,y=scores,s=i,fontsize=7.5,rotation=50)
+    ax.scatter(x=scores_sga,y=scores_satay_pd.loc[i],label='positive by Constanzo',color='green',alpha=0.4)
+    if scores_satay_pd.loc[i][0]>0:
+        ax.scatter(x=scores_sga,y=scores_satay_pd.loc[i],label='positive by Constanzo',color='green')
+        ax.text(x=scores_sga,y=scores_satay_pd.loc[i],s=i,fontsize=7.5,rotation=50)
         true_scores=true_scores+1
 
 
 
 
 for i in nrp1_negative:
-    scores=(fitness_values_dnrp1.loc[i,column].mean()-cte*fitness_values_wt.loc[i,column].mean())
+    
+    
     scores_sga=(nrp1_interactors[nrp1_interactors['Interactor.1']==i]['SGA score'].tolist()[0])
-    ax.scatter(x=scores_sga,y=scores,label='negative by Constanzo',color='purple',alpha=0.4)
-    if scores<0:
-        ax.scatter(x=scores_sga,y=scores,label='negative by Constanzo',color='purple')
-        ax.text(x=scores_sga,y=scores,s=i,fontsize=7.5,rotation=50)
+    ax.scatter(x=scores_sga,y=scores_satay_pd.loc[i],label='negative by Constanzo',color='purple',alpha=0.4)
+    if scores_satay_pd.loc[i][0]<0:
+        ax.scatter(x=scores_sga,y=scores_satay_pd.loc[i],label='negative by Constanzo',color='purple')
+        ax.text(x=scores_sga,y=scores_satay_pd.loc[i],s=i,fontsize=10,rotation=50)
         true_scores=true_scores+1
 
 
@@ -90,4 +100,12 @@ ax.set_xlim(-0.5,0.2)
 
 fig.savefig('merged_rel_to_HO_scores_intergenic_vs_constanzo_scores_nrp1-Greg.png',format='png',dpi=300,transparent=False)
 
+#%%
+fig = plt.figure(figsize=(7,7))
+ax = fig.add_subplot(111)
 
+ax.hist(scores_satay_pd['score'],color='blue')   
+
+ax.set_xlabel('scores from satay in dnrp1 relative to HO')
+
+fig.savefig('histogram-scores-from-satay-nrp1.png',format='png',dpi=300)
