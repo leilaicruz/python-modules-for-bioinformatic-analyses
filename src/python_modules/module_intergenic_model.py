@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt 
 
-def getting_r(datasets,count_for_zero_tr=False): 
+def getting_r(datasets): 
     """
     This function computes the maximum rates per gene,effectively the fitness for 
     a strain with a knockout in gene X, given an intergenic model . The intergenic model assumes a 
@@ -36,64 +36,26 @@ def getting_r(datasets,count_for_zero_tr=False):
 
     """
     ## add a for loop over times and compute the rates over those times and averaged them out and std 
-    total_reads=[]
-    exceptions_list=[]
+ 
     T=90
     interval=np.linspace(1,90,10)
-    r=[]
-    reads_per_transposons=[]
-    r_t=np.zeros(shape=(len(datasets),len(datasets[0]),len(interval)))
+    r=[]  
     
-    if count_for_zero_tr==False:
     
-        for i in np.arange(0,len(datasets)):
-        
-        
-            total_reads=np.sum(datasets[i]['number_of_read_per_gene'])
-            total_tn=np.sum(datasets[i]['number_of_transposon_per_gene'])
-            K=total_reads/total_tn # it will compute a carrying capacity per dataset 
-           
-            N=datasets[i]['number_of_read_per_gene']/(datasets[i]['number_of_transposon_per_gene']-1)#there is one more transposon from the maximum reads
-            
-            reads_per_transposons.append(N)
-            
-            r.append(np.log(N/(1-N/K))/T)
-         
+    for i in np.arange(0,len(datasets)):
     
-        
-    elif count_for_zero_tr==True: ## not working yet think ina diiferent way to do it 
-        for i in np.arange(0,len(datasets)):
-            
-            tr_exceptions=np.where((datasets[i]['number_of_transposon_per_gene']<5) )[0]
-            reads_exceptions=np.where((datasets[i]['number_of_read_per_gene']<25) )[0]
-            exceptions=np.intersect1d(tr_exceptions,reads_exceptions)
-            
-            bad_df= datasets[i].index.isin(exceptions)
-            new_df=datasets[i][~bad_df]
-            
-            N=new_df['number_of_read_per_gene']/(new_df['number_of_transposon_per_gene']-1)#there is one more transposon from the maximum reads
-        
-            reads_per_transposons.append(N)
-            
-            total_reads=np.sum(new_df['number_of_read_per_gene'])
-            total_tn=np.sum(new_df['number_of_transposon_per_gene'])
-            K=total_reads/total_tn # it will compute a carrying capacity per dataset 
-        
-            r.append(np.log(N/(1-N/K))/T)
-            exceptions_list.append(exceptions)
-            
-        
-            
-            
+    
        
-        
-            
-                   
-                
-        
+        K=np.sum(datasets[i]['reads-per-tr']) # it will compute a carrying capacity per dataset 
        
-    
-    return r,reads_per_transposons,exceptions_list
+        N=datasets[i]['reads-per-tr']
+        
+               
+        r.append(np.log(N/(1-N/K))/T)
+        
+        
+        
+    return r
 
 ### Configuring the dataframes for analyses
 

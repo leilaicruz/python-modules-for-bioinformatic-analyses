@@ -26,6 +26,8 @@ for i in names_libraries.keys():
 data_library_pd=pd.concat(data_library,keys=names_libraries.keys(),sort=True)
 data_library_pd.fillna(0,inplace=True)
 
+
+
 ################# Computing measures ######################
 
 freq=frequency_transposons(data_library_pd,names_libraries)
@@ -48,6 +50,7 @@ for i in names_libraries.keys():
     analysis_libraries[i]['median-tr-non-essentials']=median_insert_nonessentials[j]
     j=j+1
     
+del i,j
 analysis_libraries_pd=pd.DataFrame(analysis_libraries)
 
 #%% Defining the dataframes per type 
@@ -55,9 +58,11 @@ data_wt=data_library_pd.loc['wt'].copy()
 data_wt_agnes=data_library_pd.loc['wt_agnes'].copy()
 data_wt_greg2=data_library_pd.loc['wt_strong_alig'].copy()
 
+data_nrp1=data_library_pd.loc['dnrp1'].copy()
 
 ### Transposon density vs genes 
 
+data_nrp1['tr-density']=data_nrp1['Ninsertions']/data_nrp1['Nbasepairs']
 data_wt['tr-density']=data_wt['Ninsertions']/data_wt['Nbasepairs']
 data_wt_agnes['tr-density']=data_wt_agnes['Ninsertions']/data_wt_agnes['Nbasepairs']
 data_wt_greg2['tr-density']=data_wt_greg2['Ninsertions']/data_wt_greg2['Nbasepairs']
@@ -68,6 +73,11 @@ data_wt_greg2['tr-density']=data_wt_greg2['Ninsertions']/data_wt_greg2['Nbasepai
 #- Discard the genes that has less than 1% of coverage of transposons , tr-density<0.01 (around 7% of the genes that has less than 20% coverage)
 data_wt_filtered=filter_low_and_biased_reads_genes(data_wt)
 data_wt=data_wt_filtered
+data_nrp1_filtered=filter_low_and_biased_reads_genes(data_nrp1)
+data_nrp1=data_nrp1_filtered
+#%%
+data_nrp1.to_excel('datasets/data_nrp1_filtered.xlsx')
+data_wt.to_excel('datasets/data_wt_filtered.xlsx')
 
 #%% Plot transposon density (fig 1B Benoit) highlighting the centromere position
 
@@ -100,18 +110,18 @@ for i in np.arange(0,len(data_wt)):
         ax.vlines(x=i,ymin=0,ymax=0.8,linestyles='--',alpha=0.3)
         ax.text(x=i,y=0.6,s='centromere',rotation=90,fontsize=8)
 
-ax2.plot(data_wt_agnes['tr-density'],alpha=0.5,color='orange')
-ax2.set_ylabel('transposond density: tn/bp Agnes ')
+ax2.plot(data_nrp1['tr-density'],alpha=0.5,color='orange')
+ax2.set_ylabel('transposon density: tn/bp dnrp1 ')
 ax2.set_xlabel('genes')
 ## annotated centromeres
-for i in np.arange(0,len(data_wt_agnes)):
+for i in np.arange(0,len(data_nrp1)):
     
-    if data_wt_agnes.loc[i,'Feature_type']=='Centromere': 
+    if data_nrp1.loc[i,'Feature_type']=='Centromere': 
    
         ax2.vlines(x=i,ymin=0,ymax=0.8,linestyles='--',alpha=0.3)
         ax2.text(x=i,y=0.6,s='centromere',rotation=90,fontsize=8)
 #%% saving the figure transposon density
-fig.savefig('Transposon-density-WT-annotated-centromeres-Greg2_Agnes.png',dpi=300,format='png',transparent=False)
+fig.savefig('Transposon-density-WT-annotated-centromeres-WT-vs-dnrp1.png',dpi=300,format='png',transparent=False)
 #%%  Plot reads per transposon  highlighting the centromere position
 
 fig=plt.figure(figsize=(15,15))
