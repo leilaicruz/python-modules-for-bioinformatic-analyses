@@ -54,9 +54,6 @@ analysis_libraries_pd=pd.DataFrame(analysis_libraries)
 
 #%% Defining the dataframes per type 
 data_wt=data_library_pd.loc['wt'].copy()
-# data_wt_agnes=data_library_pd.loc['wt_agnes'].copy()
-# data_wt_greg2=data_library_pd.loc['wt_strong_alig'].copy()
-
 data_nrp1=data_library_pd.loc['dnrp1'].copy()
 
 ####### Transposon density vs genes ####################
@@ -81,7 +78,7 @@ data_wt.fillna(0,inplace=True)
 data_nrp1_filtered=filter_low_and_biased_reads_genes(data_nrp1)
 data_nrp1=data_nrp1_filtered
 data_nrp1.fillna(0,inplace=True)# will put zeros to the discarded regions
-#%%
+#%% Exporting datasets 
 data_nrp1.to_excel('datasets/data_nrp1_filtered_reads_per_tr.xlsx')
 data_wt.to_excel('datasets/data_wt_filtered_reads_per_tr.xlsx')
 
@@ -100,7 +97,7 @@ for i in np.arange(0,len(data_wt)):
    
         ax.vlines(x=i,ymin=0,ymax=0.8,linestyles='--',alpha=0.3)
         ax.text(x=i,y=0.6,s='centromere',rotation=90,fontsize=8)
-#%% Transposon density for comparing Greg with Agnes dataset
+#%% Transposon density for comparing two libraries
 fig=plt.figure(figsize=(10,9))
 grid = plt.GridSpec(2, 1, wspace=0.0, hspace=0.0)
 ax = plt.subplot(grid[0,0])
@@ -128,54 +125,138 @@ for i in np.arange(0,len(data_nrp1)):
         ax2.vlines(x=i,ymin=0,ymax=0.8,linestyles='--',alpha=0.3)
         ax2.text(x=i,y=0.6,s='centromere',rotation=90,fontsize=8)
 #%% saving the figure transposon density
-fig.savefig('Transposon-density-WT-annotated-centromeres-WT-vs-dnrp1.png',dpi=300,format='png',transparent=False)
+fig.savefig('output_images/Transposon-density-WT-annotated-centromeres-WT-vs-dnrp1.png',dpi=300,format='png',transparent=False)
 #%%  Plot reads per transposon  highlighting the centromere position
+strain=data_nrp1
 
 fig=plt.figure(figsize=(15,15))
-grid = plt.GridSpec(3, 1, wspace=0.0, hspace=0.0)
-ax = plt.subplot(grid[0,0])
-ax2 = plt.subplot(grid[1,0])   
-ax3 = plt.subplot(grid[2,0])  
+grid = plt.GridSpec(4, 1, wspace=0.0, hspace=0.1)
 
-ax.plot(data_wt['reads-per-tr'],alpha=0.7,color='b')
-ax.set_ylabel('reads per tr')
-ax.set_xlabel('genes')
+ax = plt.subplot(grid[0,0])
+ax2 = plt.subplot(grid[2,0])   
+ax3 = plt.subplot(grid[3,0]) 
+ax4 = plt.subplot(grid[1,0])  
+
+ax.set_title('Variation along the genome for dnrp1 merged dataset')
+ax.plot(strain['reads-per-tr'],alpha=0.9,color='green')
+ax.set_ylabel('reads per tr filtered for high tr-density')
+
 ax.set_ylim(0,2000)
 ## annotated centromeres
-for i in np.arange(0,len(data_wt)):
+for i in np.arange(0,len(strain)):
     
-    if data_wt.loc[i,'Feature_type']=='Centromere': 
+    if strain.loc[i,'Feature_type']=='Centromere': 
    
-        ax.vlines(x=i,ymin=0,ymax=1500,linestyles='--',alpha=0.3)
+        ax.vlines(x=i,ymin=0,ymax=2000,linestyles='--',alpha=0.3)
         #ax.text(x=i,y=4000,s='centromere',rotation=90,fontsize=8)
-    elif data_wt.loc[i,'reads-per-tr']>500:
+    elif strain.loc[i,'reads-per-tr']>500:
         ax.vlines(x=i,ymin=0,ymax=2000,linestyles='-',alpha=0.2)
-        ax.text(x=i,y=1500,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8)
-        
+        ax.text(x=i,y=1500,s=strain.loc[i,'Standard_name'],rotation=90,fontsize=8)
 
-ax2.plot(data_wt['Ninsertions'],alpha=0.7,color='b')
-ax2.set_ylabel('transposons')
-ax2.set_ylim(0,2000)
+ax4.plot(strain['Nreadsperinsrt'],alpha=0.5,color='green')
+ax4.set_ylabel('reads per tr without density filter')
+ax4.set_ylim(0,2000)
+#ax4.set_xticks([])
+## annotated centromeres
+for i in np.arange(0,len(strain)):
+    
+    if strain.loc[i,'Feature_type']=='Centromere': 
+   
+        ax4.vlines(x=i,ymin=0,ymax=2000,linestyles='--',alpha=0.3)
+        #ax.text(x=i,y=4000,s='centromere',rotation=90,fontsize=8)
+    elif strain.loc[i,'reads-per-tr']>500:
+        ax4.vlines(x=i,ymin=0,ymax=2000,linestyles='-',alpha=0.2)
+        ax4.text(x=i,y=1500,s=strain.loc[i,'Standard_name'],rotation=90,fontsize=8)       
+
+ax2.plot(strain['tr-density'],alpha=0.7,color='black')
+ax2.set_ylabel('transposon density')
+ax2.set_ylim(0,1)
 ## annotated centromeres
 for i in np.arange(0,len(data_wt)):
     
-    if data_wt.loc[i,'Feature_type']=='Centromere': 
+    if strain.loc[i,'Feature_type']=='Centromere': 
    
-        ax2.vlines(x=i,ymin=0,ymax=2000,linestyles='--',alpha=0.3)
-        ax2.text(x=i,y=1000,s='centromere',rotation=90,fontsize=8)
+        ax2.vlines(x=i,ymin=0,ymax=1,linestyles='--',alpha=0.3)
+        ax2.text(x=i,y=0.5,s='centromere',rotation=90,fontsize=8)
         
-ax3.plot(data_wt['Nreads'],alpha=0.7,color='b')
-ax3.set_ylabel('Reads')
-ax3.set_ylim(0,120000)
+ax3.plot(strain['reads-density'],alpha=0.5,color='b')
+ax3.set_ylabel('Reads density')
+ax3.set_xlabel('genomic regions')
+ax3.set_ylim(0,250)
 ## annotated centromeres
 for i in np.arange(0,len(data_wt)):
     
-    if data_wt.loc[i,'Feature_type']=='Centromere': 
+    if strain.loc[i,'Feature_type']=='Centromere': 
    
-        ax3.vlines(x=i,ymin=0,ymax=120000,linestyles='--',alpha=0.3)
-        ax3.text(x=i,y=100000,s='centromere',rotation=90,fontsize=8)
+        ax3.vlines(x=i,ymin=0,ymax=250,linestyles='--',alpha=0.3)
+        ax3.text(x=i,y=150,s='centromere',rotation=90,fontsize=8)
+    
 #%% saving the figure reads per transposon density
-fig.savefig('Variability-along-genome-raw-data.png',dpi=300,format='png',transparent=False)
+fig.savefig('output_images/dnrp1-Variability-along-genome-raw-data.png',dpi=300,format='png',transparent=False)
+
+#%% Compare the fold change of the reads per transposon per library
+
+fold_change=data_wt['reads-per-tr']/data_nrp1['reads-per-tr']
+fold_change.replace([np.inf, -np.inf], np.nan, inplace=True)
+fold_change.fillna(0,inplace=True)
+
+fold_change_nrp1=data_nrp1['reads-per-tr']/data_wt['reads-per-tr']
+fold_change_nrp1.replace([np.inf, -np.inf], np.nan, inplace=True)
+fold_change_nrp1.fillna(0,inplace=True)
+
+cutoff=8
+
+fig=plt.figure(figsize=(10,30))
+grid = plt.GridSpec(3, 1, wspace=0.0, hspace=0.2)
+
+ax = plt.subplot(grid[0,0])
+ax1 = plt.subplot(grid[1,0])
+ax2 = plt.subplot(grid[2,0])
+
+ax.set_title('Potential Negative Interactors for nrp1')
+ax.plot(fold_change,alpha=0.6,color='red')
+ax.hlines(y=cutoff,xmin=0,xmax=14000,linestyles='--',alpha=0.3,label='cutoff')
+
+ax.set_ylabel('fold change reads per tr')
+ax.set_ylim(0,100)
+## annotated centromeres
+for i in np.arange(0,len(data_wt)):
+    
+    
+    if fold_change[i]>cutoff and data_wt.loc[i,'Standard_name']!='noncoding':
+        ax.vlines(x=i,ymin=0,ymax=100,linestyles='-',alpha=0.2)
+        ax.text(x=i,y=60,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8)
+    if fold_change[i]>cutoff and data_wt.loc[i,'Essentiality']==1 :
+        ax.vlines(x=i,ymin=0,ymax=100,linestyles='-',alpha=0.2)
+        ax.text(x=i,y=60,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8,color='red')
+
+ax1.set_title('Potential Positive Interactors for nrp1')
+ax1.plot(fold_change_nrp1,alpha=0.6,color='green')
+ax1.hlines(y=cutoff,xmin=0,xmax=14000,linestyles='--',alpha=0.3,label='cutoff')
+ax1.set_xlabel('genomic regions')
+ax1.set_ylabel('fold change reads per tr')
+ax1.set_ylim(0,100)
+## annotated centromeres
+for i in np.arange(0,len(data_wt)):
+    
+    
+    if fold_change_nrp1[i]>cutoff and data_wt.loc[i,'Standard_name']!='noncoding' :
+        ax1.vlines(x=i,ymin=0,ymax=100,linestyles='-',alpha=0.2)
+        ax1.text(x=i,y=60,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8)
+    if fold_change_nrp1[i]>cutoff and data_wt.loc[i,'Essentiality']==1 :
+        ax1.vlines(x=i,ymin=0,ymax=100,linestyles='-',alpha=0.2)
+        ax1.text(x=i,y=60,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8,color='red')
+        
+ax.legend()
+ax1.legend()
+
+ax2.plot(data_wt['reads-per-tr'],data_nrp1['reads-per-tr'],'o',color='gray')
+ax2.set_xlim(0,3000)
+ax2.set_ylim(0,3000)
+ax2.set_xlabel('reads per tr WT')
+ax2.set_ylabel('reads per tr dnrp1')
+#%% save figure
+fig.savefig('output_images/fold_change_wt_vs_reads_per_tr.png',dpi=300,format='png',transparent=False)
 
 #%% determine the local variation of transposons along te genome 
 ## Data per chromosome
