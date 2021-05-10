@@ -17,7 +17,7 @@ from functools import reduce
 from src.python_modules.module_analysis_transposon_sites import *
 #%% Import of dataframes output from the SATAY pipeline
 
-names_libraries={'wt':'WT-merged-all.xlsx','dnrp1':'dnrp1-merged-all.xlsx','wt_agnes':'WT-merged-Agnes.xlsx','wt_strong_alig':'WT-merged-astringent-alignment.xlsx'}
+names_libraries={'wt':'data_wt_merged.xlsx','dnrp1':'data_dnrp1_merged.xlsx'}
 data_library=[]
 for i in names_libraries.keys():
  data_library.append(pd.read_excel('datasets/'+names_libraries[i],index_col='Unnamed: 0'))
@@ -26,12 +26,12 @@ for i in names_libraries.keys():
 data_library_pd=pd.concat(data_library,keys=names_libraries.keys(),sort=True)
 data_library_pd.fillna(0,inplace=True)
 
-
+#%%
 
 ################# Computing measures ######################
 
 freq=frequency_transposons(data_library_pd,names_libraries)
-reads_per_transposon=reads_per_transposon(data_library_pd,names_libraries)
+reads_per_tr=reads_per_transposon(data_library_pd,names_libraries)
 tr_density=transposon_density(data_library_pd,names_libraries)
 median_insertions=median_feature(data_library_pd,names_libraries,'Ninsertions')
 median_insert_essentials=median_feature_essentials(data_library_pd,names_libraries,'Ninsertions')
@@ -43,8 +43,7 @@ j=0
 for i in names_libraries.keys():
     
     analysis_libraries[i]['one-transposon-per-bp']=freq[j]
-    analysis_libraries[i]['median-reads-per-transposons']=reads_per_transposon[j]
-    #analysis_libraries[i]['tr-density']=tr_density[j]
+    analysis_libraries[i]['median-reads-per-transposons']=reads_per_tr[j]
     analysis_libraries[i]['median-tr']=median_insertions[j]
     analysis_libraries[i]['median-tr-essentials']=median_insert_essentials[j]
     analysis_libraries[i]['median-tr-non-essentials']=median_insert_nonessentials[j]
@@ -55,29 +54,37 @@ analysis_libraries_pd=pd.DataFrame(analysis_libraries)
 
 #%% Defining the dataframes per type 
 data_wt=data_library_pd.loc['wt'].copy()
-data_wt_agnes=data_library_pd.loc['wt_agnes'].copy()
-data_wt_greg2=data_library_pd.loc['wt_strong_alig'].copy()
+# data_wt_agnes=data_library_pd.loc['wt_agnes'].copy()
+# data_wt_greg2=data_library_pd.loc['wt_strong_alig'].copy()
 
 data_nrp1=data_library_pd.loc['dnrp1'].copy()
 
-### Transposon density vs genes 
+####### Transposon density vs genes ####################
 
 data_nrp1['tr-density']=data_nrp1['Ninsertions']/data_nrp1['Nbasepairs']
 data_wt['tr-density']=data_wt['Ninsertions']/data_wt['Nbasepairs']
-data_wt_agnes['tr-density']=data_wt_agnes['Ninsertions']/data_wt_agnes['Nbasepairs']
-data_wt_greg2['tr-density']=data_wt_greg2['Ninsertions']/data_wt_greg2['Nbasepairs']
+data_nrp1['reads-density']=data_nrp1['Nreads']/data_nrp1['Nbasepairs']
+data_wt['reads-density']=data_wt['Nreads']/data_wt['Nbasepairs']
+
+
+# data_wt_agnes['tr-density']=data_wt_agnes['Ninsertions']/data_wt_agnes['Nbasepairs']
+# data_wt_greg2['tr-density']=data_wt_greg2['Ninsertions']/data_wt_greg2['Nbasepairs']
 #%% Get the reads per transpons 
 #%% Getting a better measure of the reads per transposons
 #- Discard the genes that has less than 25 reads 
 #- Discard the genes that has more 20% coverage of transposons (centromeres , bias genes), tr-density>0.2 (less than 3% of the data)
 #- Discard the genes that has less than 1% of coverage of transposons , tr-density<0.01 (around 7% of the genes that has less than 20% coverage)
+
 data_wt_filtered=filter_low_and_biased_reads_genes(data_wt)
 data_wt=data_wt_filtered
+data_wt.fillna(0,inplace=True)
 data_nrp1_filtered=filter_low_and_biased_reads_genes(data_nrp1)
 data_nrp1=data_nrp1_filtered
+data_nrp1.fillna(0,inplace=True)# will put zeros to the discarded regions
 #%%
-data_nrp1.to_excel('datasets/data_nrp1_filtered.xlsx')
-data_wt.to_excel('datasets/data_wt_filtered.xlsx')
+data_nrp1.to_excel('datasets/data_nrp1_filtered_reads_per_tr.xlsx')
+data_wt.to_excel('datasets/data_wt_filtered_reads_per_tr.xlsx')
+
 
 #%% Plot transposon density (fig 1B Benoit) highlighting the centromere position
 

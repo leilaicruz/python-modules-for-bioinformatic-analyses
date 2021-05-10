@@ -21,6 +21,8 @@ def frequency_transposons(data,names_libraries):
         
     return freq
 
+
+
 def reads_per_transposon(data,names_libraries):
     readspertr=[]
     for i in names_libraries.keys():
@@ -67,6 +69,7 @@ def local_variation(chrom,windows,data,column):
    
     
     return mean_values,std_values
+ 
 
 def filter_low_and_biased_reads_genes(target_data,reads_upper_th=25,tr_upper_th=2,tr_density_upper_th=0.01,tr_density_low_th=0.2):
     

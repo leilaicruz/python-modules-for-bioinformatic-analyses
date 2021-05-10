@@ -38,7 +38,8 @@ nrp1_positive=pd.unique(nrp1_positive['Interactor.1'])
 
 #%% Plotting the constanzo SGA scores vs my scores out of fitness values 
 
-column='rates-intergenic'
+column='rates-intergenic-non-filter' # rates out of non filtered reads per transposons
+#column='rates-intergenic' # rates out of the reads per transposon filetred by some condition
 
 #score_fitness=fitness(dgenednrp1)-fitness(nrp1)fitness(gene)
 cte=fitness_values_wt.loc['NRP1',column]/fitness_values_wt.loc['HO',column]
@@ -53,11 +54,13 @@ fitness_values_dnrp1.fillna(0,inplace=True)
 scores_satay=defaultdict(dict)
 
 for i in fitness_values_wt.index:
-    scores_satay[i]['score']=(fitness_values_dnrp1.loc[i,'rates-intergenic'].mean()-cte*fitness_values_wt.loc[i,'rates-intergenic'].mean())
+    scores_satay[i]['score']=(fitness_values_dnrp1.loc[i,column].mean()-cte*fitness_values_wt.loc[i,column].mean())
 #%%
 scores_satay_pd=pd.DataFrame(scores_satay)
 scores_satay_pd=scores_satay_pd.T
 
+scores_satay_pd.replace([np.inf, -np.inf], np.nan, inplace=True)
+scores_satay_pd.fillna(0,inplace=True)
 
 #%%
 fig = plt.figure(figsize=(7,7))
@@ -72,8 +75,9 @@ for i in nrp1_positive:
     ax.scatter(x=scores_sga,y=scores_satay_pd.loc[i],label='positive by Constanzo',color='green',alpha=0.4)
     if scores_satay_pd.loc[i][0]>0:
         ax.scatter(x=scores_sga,y=scores_satay_pd.loc[i],label='positive by Constanzo',color='green')
-        ax.text(x=scores_sga,y=scores_satay_pd.loc[i],s=i,fontsize=7.5,rotation=50)
+        ax.text(x=scores_sga,y=scores_satay_pd.loc[i],s=i,fontsize=10,rotation=50)
         true_scores=true_scores+1
+        
 
 
 
@@ -87,6 +91,7 @@ for i in nrp1_negative:
         ax.scatter(x=scores_sga,y=scores_satay_pd.loc[i],label='negative by Constanzo',color='purple')
         ax.text(x=scores_sga,y=scores_satay_pd.loc[i],s=i,fontsize=10,rotation=50)
         true_scores=true_scores+1
+        
 
 
 ax.set_title('Constanzo interactors')
@@ -98,14 +103,28 @@ ax.set_xlim(-0.5,0.2)
 
 
 
-fig.savefig('merged_rel_to_HO_scores_intergenic_vs_constanzo_scores_nrp1-Greg.png',format='png',dpi=300,transparent=False)
+#%%
+
+fig.savefig('merged_rel_to_HO_scores_intergenic_vs_constanzo_scores_nrp1-non-filtered.png',format='png',dpi=300,transparent=False)
 
 #%%
-fig = plt.figure(figsize=(7,7))
-ax = fig.add_subplot(111)
+fig=plt.figure(figsize=(10,9))
+grid = plt.GridSpec(2, 1, wspace=0.0, hspace=0.3)
+ax = plt.subplot(grid[0,0])
+ax2 = plt.subplot(grid[1,0])   
 
-ax.hist(scores_satay_pd['score'],color='blue')   
+
+ax.hist(scores_satay_pd['score'],color='blue',density=1,alpha=0.5)   
 
 ax.set_xlabel('scores from satay in dnrp1 relative to HO')
+ax.set_ylabel('counts')
+ax.set_xlim(-0.2,0.08)
 
-fig.savefig('histogram-scores-from-satay-nrp1.png',format='png',dpi=300)
+
+ax2.hist(scores_sga,color='blue',bins=50,density=1,alpha=0.5)   
+
+ax2.set_xlabel('scores for dnrp1 from SGA')
+ax2.set_ylabel('counts')
+ax2.set_xlim(-0.2,0.08)
+#%%
+fig.savefig('histogram-scores-from-satay-and-SGA-nrp1-filtered_0_reads.png',format='png',dpi=300)

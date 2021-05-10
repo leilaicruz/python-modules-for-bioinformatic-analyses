@@ -30,9 +30,7 @@ def getting_r(datasets):
     -------
     r : array of length of the list given as input 
         array containing the maximum rates per gene per dataset in the population according an intergenic model
-    reads_per_transposons : 
-        array of length of the list given as input 
-        array containing the reads per transposons per dataset. 
+   
 
     """
     ## add a for loop over times and compute the rates over those times and averaged them out and std 
@@ -40,7 +38,8 @@ def getting_r(datasets):
     T=90
     interval=np.linspace(1,90,10)
     r=[]  
-    
+    r_non_filter=[]
+ 
     
     for i in np.arange(0,len(datasets)):
     
@@ -49,13 +48,19 @@ def getting_r(datasets):
         K=np.sum(datasets[i]['reads-per-tr']) # it will compute a carrying capacity per dataset 
        
         N=datasets[i]['reads-per-tr']
-        
-               
+                       
         r.append(np.log(N/(1-N/K))/T)
         
+        K_n=np.sum(datasets[i]['Nreadsperinsrt']) # it will compute a carrying capacity per dataset 
+       
+        N_n=datasets[i]['Nreadsperinsrt']
+                       
+        r_non_filter.append(np.log(N_n/(1-N_n/K_n))/T)
+        
+              
         
         
-    return r
+    return r,r_non_filter
 
 ### Configuring the dataframes for analyses
 
