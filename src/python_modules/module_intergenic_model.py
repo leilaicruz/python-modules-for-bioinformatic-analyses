@@ -36,26 +36,30 @@ def getting_r(datasets):
     ## add a for loop over times and compute the rates over those times and averaged them out and std 
  
     T=90
-    interval=np.linspace(1,90,10)
     r=[]  
     r_non_filter=[]
+    volume=3000 #mL
+    C=6000# aprox density of cells per ml at the start of the reseed 
+    C_end=C*9 # aprox density of cells per ml at the end of the reseed (counting the number of generations )
  
-    
+    K=C_end
     for i in np.arange(0,len(datasets)):
     
     
        
-        K=np.sum(datasets[i]['reads-per-tr']) # it will compute a carrying capacity per dataset 
        
-        N=datasets[i]['reads-per-tr']
+        N=C+C*datasets[i]['reads-per-tr']/volume # contribution of each mutant to the population density 
+        #K=np.sum(N) # it will compute a carrying capacity per dataset 
+
                        
-        r.append(np.log(N/(1-N/K))/T)
+        r.append(np.log(N/(C-N*C/K))/T)
         
-        K_n=np.sum(datasets[i]['Nreadsperinsrt']) # it will compute a carrying capacity per dataset 
        
-        N_n=datasets[i]['Nreadsperinsrt']
+        N_n=C+C*datasets[i]['Nreadsperinsrt']/volume
+        #K_n=np.sum(N_n) # it will compute a carrying capacity per dataset 
+
                        
-        r_non_filter.append(np.log(N_n/(1-N_n/K_n))/T)
+        r_non_filter.append(np.log(N_n/(C-N_n*C/K))/T)
         
               
         
