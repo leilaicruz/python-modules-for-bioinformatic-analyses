@@ -23,7 +23,17 @@ for i in names_libraries.keys():
  data_library.append(pd.read_excel('datasets/'+names_libraries[i],index_col='Unnamed: 0'))
 #### Creating a big dataframe of the libraries
 
-data_library_pd=pd.concat(data_library,keys=names_libraries.keys(),sort=True)
+
+datasets=data_library
+
+del data_library,i
+#%% Removing the ADE2 and URA3 gene reads and insertions from the population
+
+for i in np.arange(0,len(datasets)):
+    datasets[i]=datasets[i][datasets[i].Standard_name != 'ADE2']
+    datasets[i]=datasets[i][datasets[i].Standard_name != 'URA3']
+
+data_library_pd=pd.concat(datasets,keys=names_libraries.keys(),sort=True)
 data_library_pd.fillna(0,inplace=True)
 
 #%%
@@ -82,7 +92,21 @@ data_nrp1.fillna(0,inplace=True)# will put zeros to the discarded regions
 data_nrp1.to_excel('datasets/data_nrp1_filtered_reads_per_tr.xlsx')
 data_wt.to_excel('datasets/data_wt_filtered_reads_per_tr.xlsx')
 
+#%% Reads distribution per gene
 
+data_wt.index=data_wt['Standard_name']
+
+
+gene='BDH1'
+total=len(data_wt.loc[gene,'Nreads_list'].strip('[]'))
+reads_gene=[]
+for i in np.arange(0,total):
+    value=data_wt.loc[gene,'Nreads_list'].strip('[]')
+    if value[i]!='.' and value[i]!= ' ':
+    
+        reads_gene.append(int(value[i]))
+        
+    
 #%% Plot transposon density (fig 1B Benoit) highlighting the centromere position
 
 fig = plt.figure(figsize=(10,5))
@@ -255,8 +279,70 @@ ax2.set_xlim(0,3000)
 ax2.set_ylim(0,3000)
 ax2.set_xlabel('reads per tr WT')
 ax2.set_ylabel('reads per tr dnrp1')
+#%% Compare the fold change of the transposons per library
+
+fold_change=data_wt['tr-density']/data_nrp1['tr-density']
+fold_change.replace([np.inf, -np.inf], np.nan, inplace=True)
+fold_change.fillna(0,inplace=True)
+
+fold_change_nrp1=1/fold_change
+fold_change_nrp1.replace([np.inf, -np.inf], np.nan, inplace=True)
+fold_change_nrp1.fillna(0,inplace=True)
+
+cutoff=1.8
+
+fig=plt.figure(figsize=(10,30))
+grid = plt.GridSpec(3, 1, wspace=0.0, hspace=0.2)
+
+ax = plt.subplot(grid[0,0])
+ax1 = plt.subplot(grid[1,0])
+ax2 = plt.subplot(grid[2,0])
+
+ax.set_title('Potential Negative Interactors for nrp1')
+ax.plot(fold_change,alpha=0.6,color='red')
+ax.hlines(y=cutoff,xmin=0,xmax=14000,linestyles='--',alpha=0.3,label='cutoff')
+
+ax.set_ylabel('fold change tr density')
+ax.set_ylim(0,15)
+## annotated centromeres
+for i in np.arange(0,len(data_wt)):
+    
+    
+    if fold_change[i]>cutoff and data_wt.loc[i,'Standard_name']!='noncoding':
+        ax.vlines(x=i,ymin=0,ymax=15,linestyles='-',alpha=0.2)
+        ax.text(x=i,y=8,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8)
+    if fold_change[i]>cutoff and data_wt.loc[i,'Essentiality']==1 :
+        ax.vlines(x=i,ymin=0,ymax=15,linestyles='-',alpha=0.2)
+        ax.text(x=i,y=8,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8,color='red')
+cutoff=7
+ax1.set_title('Potential Positive Interactors for nrp1')
+ax1.plot(fold_change_nrp1,alpha=0.6,color='green')
+ax1.hlines(y=cutoff,xmin=0,xmax=14000,linestyles='--',alpha=0.3,label='cutoff')
+ax1.set_xlabel('genomic regions')
+ax1.set_ylabel('fold change tr density')
+ax1.set_ylim(0,30)
+## annotated centromeres
+
+for i in np.arange(0,len(data_wt)):
+    
+    
+    if fold_change_nrp1[i]>cutoff and data_wt.loc[i,'Standard_name']!='noncoding' :
+        ax1.vlines(x=i,ymin=0,ymax=30,linestyles='-',alpha=0.2)
+        ax1.text(x=i,y=20,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8)
+    if fold_change_nrp1[i]>cutoff and data_wt.loc[i,'Essentiality']==1 :
+        ax1.vlines(x=i,ymin=0,ymax=30,linestyles='-',alpha=0.2)
+        ax1.text(x=i,y=20,s=data_wt.loc[i,'Standard_name'],rotation=90,fontsize=8,color='red')
+        
+ax.legend()
+ax1.legend()
+
+ax2.plot(data_wt['tr-density'],data_nrp1['tr-density'],'o',color='gray')
+# ax2.set_xlim(0,3000)
+# ax2.set_ylim(0,3000)
+ax2.set_xlabel('tr density WT')
+ax2.set_ylabel('tr density  dnrp1')
 #%% save figure
-fig.savefig('output_images/fold_change_wt_vs_reads_per_tr.png',dpi=300,format='png',transparent=False)
+fig.savefig('output_images/fold_change_wt_vs_nrp1_tr_density.png',dpi=300,format='png',transparent=False)
 
 #%% determine the local variation of transposons along te genome 
 ## Data per chromosome

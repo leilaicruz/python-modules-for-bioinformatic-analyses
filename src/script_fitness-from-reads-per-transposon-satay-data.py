@@ -48,7 +48,9 @@ for i in np.arange(0,len(datasets)):
 
 rates,rates_no_filter=getting_r(datasets)
 
+
 #%% Preparing datasets for analyses
+
 
 data_library_pd=pd.concat(datasets,keys=names_libraries.keys(),sort=True)
 data_library_pd.fillna(0,inplace=True)
@@ -56,13 +58,19 @@ data_library_pd.fillna(0,inplace=True)
 data_wt=data_library_pd.loc['wt']
 data_nrp1=data_library_pd.loc['dnrp1']
 
-data_wt.loc[:,'rates-intergenic']=rates[0].values
+data_wt.index=data_wt['Standard_name']
+data_nrp1.index=data_nrp1['Standard_name']
 
-data_nrp1.loc[:,'rates-intergenic']=rates[1].values
+data_wt.loc[:,'rates-intergenic']=np.abs(rates[0].values)
+data_wt.loc[:,'rates-intergenic-norm']=np.abs(rates[0].values)/data_wt.loc['HO','rates-intergenic']
 
-data_wt.loc[:,'rates-intergenic-non-filter']=rates_no_filter[0].values
+data_nrp1.loc[:,'rates-intergenic']=np.abs(rates[1].values)
+data_nrp1.loc[:,'rates-intergenic-norm']=np.abs(rates[1].values)/data_wt.loc['HO','rates-intergenic']
 
-data_nrp1.loc[:,'rates-intergenic-non-filter']=rates_no_filter[1].values
+
+data_wt.loc[:,'rates-intergenic-non-filter']=np.abs(rates_no_filter[0].values)
+
+data_nrp1.loc[:,'rates-intergenic-non-filter']=np.abs(rates_no_filter[1].values)
 
 data_wt.replace([np.inf, -np.inf], np.nan, inplace=True)
 data_wt.fillna(0,inplace=True)
@@ -73,9 +81,31 @@ data_nrp1.fillna(0,inplace=True)
 
 data_wt.to_excel('datasets/data_wt_rates.xlsx')
 data_nrp1.to_excel('datasets/data_dnrp1_rates.xlsx')
+#%% Distribution plots
+
+fig = plt.figure(figsize=(10,5))
+ax = fig.add_subplot(111)
+
+p=sns.displot(data_wt,x='rates-intergenic-norm',kde=True)
+p.fig.suptitle("Fitness distribution from WT normalized to HO")
+
+p.fig.tight_layout()
+p.fig.subplots_adjust(top=0.95) # Reduce plot to make room 
+#%%
+p.savefig('fitness-from-intergenic-normalized.png', format='png',dpi=300)  
+#%%
+fig = plt.figure(figsize=(10,5))
+ax = fig.add_subplot(111)
+
+p=sns.displot(data_wt,x='tr-density',kde=True)
+p.fig.suptitle("Transposon density")
+
+p.fig.tight_layout()
+p.fig.subplots_adjust(top=0.95)
+#%%
+p.savefig('transposon-density-histogram-merged-WT.png', format='png',dpi=300)
+
 #%% Fitness plots
-data_wt.index=data_wt['Standard_name']
-data_nrp1.index=data_nrp1['Standard_name']
 
 ## To discard the non coding genes from the plot
 data_wt=data_wt[data_wt['Standard_name']!= 'noncoding']
@@ -88,20 +118,20 @@ fig = plt.figure(figsize=(10,5))
 ax = fig.add_subplot(111)
 ax.plot(values2HO_wt,values2HO_dnrp1,'bo',alpha=0.2)
 
-plt.plot(np.linspace(0,2),np.linspace(0,1)*values2HO_wt.loc['NRP1'],linewidth=4,alpha=0.4,color='k')
-plt.plot(np.linspace(0,2),np.linspace(0,2),linewidth=4,alpha=0.4,color='k')
+plt.plot(np.linspace(0.5,3),np.linspace(0.5,3)*values2HO_wt.loc['NRP1'],linewidth=1,alpha=0.4,color='k')
+plt.plot(np.linspace(0.5,3),np.linspace(0.5,3),linewidth=1,alpha=0.4,color='k')
 
-for i in range(0,len(values2HO_wt)):
+# for i in range(0,len(values2HO_wt)):
     
-    if values2HO_dnrp1[i]<0.5*(values2HO_wt[i]*values2HO_wt.loc['NRP1']):
-        ax.text(values2HO_wt[i],values2HO_dnrp1[i],values2HO_dnrp1.index[i],fontsize=6)
-    elif values2HO_dnrp1[i]/values2HO_wt[i] > 2:
-        ax.text(values2HO_wt[i],values2HO_dnrp1[i],values2HO_dnrp1.index[i],fontsize=6)
+#     if values2HO_dnrp1[i]<0.5*(values2HO_wt[i]*values2HO_wt.loc['NRP1']):
+#         ax.text(values2HO_wt[i],values2HO_dnrp1[i],values2HO_dnrp1.index[i],fontsize=6)
+#     elif values2HO_dnrp1[i]/values2HO_wt[i] > 3:
+#         ax.text(values2HO_wt[i],values2HO_dnrp1[i],values2HO_dnrp1.index[i],fontsize=6)
 
         
 
-ax.set_xlim(0,2)
-ax.set_ylim(0,2)
+#ax.set_xlim(0,5)
+#ax.set_ylim(0,5)
 ax.set_xlabel('single knockout fitness')
 ax.set_ylabel('double knockout fitness: dnrp1dgenex')
 #plt.savefig('dnrp1-fitness-map-from-satay.png',dpi=300,transparent=True,format='png')
@@ -118,22 +148,24 @@ T=90
 #K=np.sum(N)
 K_wt=data_wt['reads-per-tr'].sum()
 N_wt=data_wt['reads-per-tr']
-intergenic_model=np.log(N_wt/(1-N_wt/K_wt))/T
+intergenic_model=np.log(N_wt*K_wt/(K_wt-N_wt))/T
+#intergenic_model=np.abs(intergenic_model)
 ref_HO_wt=intergenic_model.loc['HO']
 
-#%%
 
-N_dnrp1=data_nrp1['reads-per-tr']
+
 K_dnrp1=data_nrp1['reads-per-tr'].sum()
-intergenic_model_nrp1=np.log(N_dnrp1/(1-N_dnrp1/K_dnrp1))/T
+N_dnrp1=data_nrp1['reads-per-tr']
+intergenic_model_nrp1=np.log(N_dnrp1*K_dnrp1/(K_dnrp1-N_dnrp1))/T
+#intergenic_model_nrp1=np.abs(intergenic_model_nrp1)
 ref_HO_dnrp1=intergenic_model_nrp1.loc['HO']
 
 
 fig = plt.figure(figsize=(13,5))
 ax = fig.add_subplot(121)
-ax.scatter(data_wt.loc[:,'reads-per-tr'],intergenic_model/ref_HO_wt,alpha=0.5,color='b')
+ax.scatter(data_wt['reads-per-tr'],intergenic_model/ref_HO_wt,alpha=0.5,color='b')
 ax2 = fig.add_subplot(122)
-ax2.scatter(data_nrp1.loc[:,'reads-per-tr'],intergenic_model_nrp1/ref_HO_wt,alpha=0.5,color='b')
+ax2.scatter(data_nrp1['reads-per-tr'],intergenic_model_nrp1/ref_HO_wt,alpha=0.5,color='b')
 
 ax.set_title('Merged WT')
 ax2.set_title('Merged dnrp1')

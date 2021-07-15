@@ -19,7 +19,7 @@ conversion.columns=['systematic_name','standard_name']
 qian_dataset=pd.read_excel('datasets/Gowthrate_Qian.xls',header=1)
 qian_dataset_SC=qian_dataset.loc[:,['ORF','SC fitness']]
 
-fitness_intergenic=pd.read_excel('datasets/data_wt_rates_filtered_0_reads.xlsx')
+fitness_intergenic=pd.read_excel('datasets/data_wt_rates.xlsx')
 fitness_intergenic.index=fitness_intergenic['Standard_name']
 #%% Replacing the systematic names from QIan to standard names
 j=0
@@ -43,27 +43,50 @@ qian_dataset_SC.index=qian_dataset_SC['ORF_standard']
 norm_wt_fitness=fitness_intergenic['rates-intergenic']/fitness_intergenic.loc['HO','rates-intergenic']
 #norm_dnrp1_fitness=fitness_intergenic[column_dnrp1]
 qian_dataset_SC_fitness=qian_dataset_SC['SC fitness']
+#%% Comparing relative fitness scatter
 
+
+qian_fitness=[]
+satay_fitness=[]
+for genes in qian_dataset_SC.index:
+    if genes in norm_wt_fitness.index:
+        
+       
+        satay_fitness.append(np.mean(norm_wt_fitness[genes]))
+        qian_fitness.append(qian_dataset_SC.loc[genes,'SC fitness'])
+       
+#%% dataframe of the fitness
+data=pd.DataFrame([satay_fitness,qian_fitness])
+data=data.T
+data.columns=['satay-fitness', 'Qian-fitness']
+#%%  Plot comparison
+p=sns.jointplot('satay-fitness','Qian-fitness',data=data,kind="reg",height=5, ratio=2, marginal_ticks=True,color='black')
+p.fig.suptitle("Fitness from Qian et al vs SATAY")
+
+p.fig.tight_layout()
+p.fig.subplots_adjust(top=0.95) # Reduce plot to make room        
+
+
+#%% saving plot
+
+p.savefig('fitness-from-satay-vs-qian.png', format='png',dpi=300)
 
 #%% Comparing relative fitness scatter
 
 fig = plt.figure(figsize=(8,8))
 ax = fig.add_subplot(111)
 
+
 for genes in qian_dataset_SC.index:
     if genes in norm_wt_fitness.index:
         
-        #ax.scatter(x=norm_wt_fitness[genes],y=qian_dataset_SC_fitness[genes],color='blue',alpha=0.6)
+       
         x=norm_wt_fitness[genes]
-        # if isinstance(norm_wt_fitness[genes],float)==False: 
-            
-        #     ax.scatter(x[0],y=qian_dataset_SC_fitness[genes],color='blue',alpha=0.4,label='WT')
-        # #ax.scatter(x=norm_dnrp1_fitness[genes],y=qian_dataset_SC_fitness[genes],color='orange',alpha=0.5,label='dnrp1')
-        # else:
+       
         ax.scatter(x.mean(),y=qian_dataset_SC_fitness[genes],color='blue',alpha=0.4,label='WT')
 
-ax.set_ylim(0.3,1.2)
-ax.set_xlim(0.3,1.2)
+# ax.set_ylim(0.2,1.2)
+# ax.set_xlim(0.2,1.2)
 ax.set_ylabel('Qian  SC fitness values of mutants relative to WT ')
 ax.set_xlabel('Intergenic model fitness from WT relative values to HO ')
 
@@ -71,16 +94,17 @@ ax.set_xlabel('Intergenic model fitness from WT relative values to HO ')
 ax.plot(np.linspace(0,1.5),np.linspace(0,1.5),color='black',linewidth=10,alpha=0.2)
 #%% saving the figure
 
-fig.savefig('scatter-qian-fitness-satay-filtered_0_reads.png',format='png',dpi=300)
+fig.savefig('scatter-qian-fitness-satay.png',format='png',dpi=300)
 #%% histograms
 fig = plt.figure(figsize=(10,5))
 ax = fig.add_subplot(121)
 
-ax.hist(norm_wt_fitness)
+ax.hist(norm_wt_fitness,color='blue')
 ax.set_xlabel('fitness-relative-to-HO-satay')
 ax2=fig.add_subplot(122)
-ax2.hist(qian_dataset_SC_fitness)
+ax2.hist(qian_dataset_SC_fitness,color='gray')
 ax2.set_xlabel('qian-fitness-relative-to-wt')
+#%%
 
-#fig.savefig('histograms-qian-fitness-satay.png',format='png',dpi=300)
+fig.savefig('histograms-qian-fitness-satay.png',format='png',dpi=300)
 

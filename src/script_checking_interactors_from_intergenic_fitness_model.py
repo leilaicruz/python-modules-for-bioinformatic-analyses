@@ -38,8 +38,8 @@ nrp1_positive=pd.unique(nrp1_positive['Interactor.1'])
 
 #%% Plotting the constanzo SGA scores vs my scores out of fitness values 
 
-column='rates-intergenic-non-filter' # rates out of non filtered reads per transposons
-#column='rates-intergenic' # rates out of the reads per transposon filetred by some condition
+#column='rates-intergenic-non-filter' # rates out of non filtered reads per transposons
+column='rates-intergenic' # rates out of the reads per transposon filtered by some condition
 
 #score_fitness=fitness(dgenednrp1)-fitness(nrp1)fitness(gene)
 cte=fitness_values_wt.loc['NRP1',column]/fitness_values_wt.loc['HO',column]
@@ -98,7 +98,7 @@ ax.set_title('Constanzo interactors')
 ax.set_xlabel('Scores_SGA')
 ax.grid()
 ax.set_ylabel('Scores_intergenic model')
-ax.set_ylim(-0.05,0.05)
+ax.set_ylim(-0.06,0.06)
 ax.set_xlim(-0.5,0.2)
 
 

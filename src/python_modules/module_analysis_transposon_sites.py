@@ -42,6 +42,20 @@ def median_feature(data,names_libraries,feature):
         
         median_feature.append(data.loc[i][feature].median())        
     return median_feature
+
+def mean_feature(data,names_libraries,feature):
+    mean_feature=[]
+    for i in names_libraries.keys():
+        
+        mean_feature.append(data.loc[i][feature].mean())        
+    return mean_feature
+
+def std_feature(data,names_libraries,feature):
+    std_feature=[]
+    for i in names_libraries.keys():
+        
+        std_feature.append(data.loc[i][feature].std())        
+    return std_feature
     
 def median_feature_essentials(data,names_libraries,feature):
     median_feature=[]
